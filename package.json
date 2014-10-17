@@ -1,6 +1,6 @@
 {
   "name": "extract-zip",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "unzip a zip file into a directory using 100% pure gluten-free organic javascript",
   "main": "index.js",
   "bin": {
@@ -31,7 +31,7 @@
     "mkdirp": "0.5.0",
     "concat-stream": "^1.4.6",
     "through2": "0.6.3",
-    "yauzl": "^2.0.3"
+    "yauzl": "^2.1.0"
   },
   "devDependencies": {
     "rimraf": "^2.2.8"

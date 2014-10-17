@@ -13,5 +13,10 @@ if (!source) {
 }
 
 extract(source, {dir: dest}, function(err, results) {
-  if (err) console.error('error!', err)
+  if (err) {
+    console.error('error!', err)
+    process.exit(1)
+  } else {
+    process.exit(0)
+  }
 })

@@ -59,6 +59,8 @@ module.exports = function(zipPath, opts, cb) {
         symlink = true
       }
       
+      var mode = (entry.externalFileAttributes >> 16) & 0xFFFF
+      
       zipfile.openReadStream(entry, function(err, readStream) {
         if (err) {
           debug('openReadStream error', err)
@@ -82,7 +84,7 @@ module.exports = function(zipPath, opts, cb) {
         })
         
         function writeStream() {
-          var writeStream = fs.createWriteStream(dest)
+          var writeStream = fs.createWriteStream(dest, {mode: mode})
           readStream.pipe(writeStream)
           writeStream.on('finish', function() {
             done()
