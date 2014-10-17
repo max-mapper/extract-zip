@@ -6,10 +6,6 @@ var mkdirp = require('mkdirp')
 var concat = require('concat-stream')
 var debug = require('debug')('extract-zip')
 
-// lolol zips
-var MAGIC_SYMLINK_ATTR_1 = 2716663808
-var MAGIC_SYMLINK_ATTR_2 = 2716680192
-
 module.exports = function(zipPath, opts, cb) {
   debug('opening', zipPath, 'with opts', opts)
   yauzl.open(zipPath, {autoClose: false}, function(err, zipfile) {
@@ -28,8 +24,14 @@ module.exports = function(zipPath, opts, cb) {
     
     zipfile.on("entry", function(entry) {
       debug('zipfile entry', entry.fileName)
+      
       if (/\/$/.test(entry.fileName)) {
         // directory file names end with '/'
+        return
+      }
+      
+      if (/^__MACOSX\//.test(entry.fileName)) {
+        // dir name starts with __MACOSX/
         return
       }
       
@@ -52,14 +54,13 @@ module.exports = function(zipPath, opts, cb) {
       
       var dest = path.join(opts.dir, entry.fileName)
       var destDir = path.dirname(dest)
-      var symlink = false
-      
-      if (entry.externalFileAttributes === MAGIC_SYMLINK_ATTR_1 || 
-          entry.externalFileAttributes === MAGIC_SYMLINK_ATTR_2) {
-        symlink = true
-      }
-      
+        
+      // convert external file attr int into a fs stat mode int
       var mode = (entry.externalFileAttributes >> 16) & 0xFFFF
+      // check if it's a symlink (using stat mode constants)
+      var IFMT = 61440
+      var IFLNK = 40960
+      var symlink = (mode & IFMT) === IFLNK
       
       zipfile.openReadStream(entry, function(err, readStream) {
         if (err) {

@@ -38,9 +38,3 @@ extract-zip foo.zip <targetDirectory>
 ```
 
 If not specified, `targetDirectory` will default to `process.cwd()`.
-
-## stuff to figure out
-
--- better handling of magic symlink attr
--- ignore __macosx folder?
--- when to chmod +x (internal file attribute?)
