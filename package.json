@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/maxogden/extract-zip",
   "dependencies": {
+    "minimist": "0.1.0",
     "debug": "0.7.4",
     "async": "0.9.0",
     "mkdirp": "0.5.0",

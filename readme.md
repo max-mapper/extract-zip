@@ -1,6 +1,6 @@
 # extract-zip
 
-Streaming unzip written in pure JavaScript. Available as a library or a command line program.
+Streaming unzip written in pure JavaScript. Extracts a zip into a directory. Available as a library or a command line program.
 
 Uses the [`yauzl`](http://npmjs.org/yauzl) ZIP parser.
 
