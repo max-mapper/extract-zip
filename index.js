@@ -57,11 +57,24 @@ module.exports = function(zipPath, opts, cb) {
         
       // convert external file attr int into a fs stat mode int
       var mode = (entry.externalFileAttributes >> 16) & 0xFFFF
-      // check if it's a symlink (using stat mode constants)
+      // check if it's a symlink or dir (using stat mode constants)
       var IFMT = 61440
+      var IFDIR = 16384
       var IFLNK = 40960
       var symlink = (mode & IFMT) === IFLNK
+      var isDir = (mode & IFMT) === IFDIR
       
+      // if no mode then default to readable
+      if (mode === 0) {
+        if (isDir) mode = 0555
+        else mode = 0444
+      }
+      
+      // reverse umask first (~)
+      var umask = ~process.umask()
+      // & with processes umask to override invalid perms
+      var procMode = mode & umask
+
       zipfile.openReadStream(entry, function(err, readStream) {
         if (err) {
           debug('openReadStream error', err)
@@ -85,7 +98,7 @@ module.exports = function(zipPath, opts, cb) {
         })
         
         function writeStream() {
-          var writeStream = fs.createWriteStream(dest, {mode: mode})
+          var writeStream = fs.createWriteStream(dest, {mode: procMode})
           readStream.pipe(writeStream)
           writeStream.on('finish', function() {
             done()
