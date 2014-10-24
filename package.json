@@ -31,7 +31,8 @@
     "mkdirp": "0.5.0",
     "concat-stream": "^1.4.6",
     "through2": "0.6.3",
-    "yauzl": "^2.1.0"
+    "yauzl": "^2.1.0",
+    "when": "3.5.0"
   },
   "devDependencies": {
     "rimraf": "^2.2.8"
