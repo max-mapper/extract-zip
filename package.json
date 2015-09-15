@@ -34,7 +34,8 @@
     "yauzl": "^2.1.0"
   },
   "devDependencies": {
-    "rimraf": "^2.2.8"
+    "rimraf": "^2.2.8",
+    "tape": "^4.2.0"
   },
   "directories": {
     "test": "test"
