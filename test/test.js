@@ -42,19 +42,19 @@ extract(source, {dir: target}, function(err) {
 
     });
 
-    test('folders', function (t) {
+    test('directories', function (t) {
 
-        var symlink = path.join(results, 'orange');
+        var dirWithContent = path.join(results, 'orange');
 
         t.plan(3);
 
-        fs.exists(symlink, function (exists) {
-            t.ok(exists, 'folder created');
+        fs.exists(dirWithContent, function (exists) {
+            t.ok(exists, 'directory created');
         });
 
-        fs.readdir(symlink, function (err, files) {
-            t.same(err, null, 'folder can be read');
-            t.ok(files.length > 0, 'folder has files');
+        fs.readdir(dirWithContent, function (err, files) {
+            t.same(err, null, 'directory can be read');
+            t.ok(files.length > 0, 'directory has files');
         });
 
     });
