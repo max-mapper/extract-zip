@@ -55,7 +55,6 @@ module.exports = function (zipPath, opts, cb) {
         }
 
         var dest = path.join(opts.dir, entry.fileName)
-        var destDir = path.dirname(dest)
 
         // convert external file attr int into a fs stat mode int
         var mode = (entry.externalFileAttributes >> 16) & 0xFFFF
@@ -79,60 +78,62 @@ module.exports = function (zipPath, opts, cb) {
         // & with processes umask to override invalid perms
         var procMode = mode & umask
 
-        if (isDir) {
-          debug('creating directory', dest)
-          return mkdirp(dest, function (err) {
-            if (err) {
-              debug('mkdirp error', destDir, {error: err})
-              cancelled = true
-              return done(err)
-            }
-            return done()
-          })
-        }
+        // always ensure folders are created
+        var destDir = dest
+        if (!isDir) destDir = path.dirname(dest)
 
-        debug('opening read stream', dest)
-
-        zipfile.openReadStream(entry, function (err, readStream) {
+        debug('mkdirp', {dir: destDir})
+        mkdirp(destDir, function (err) {
           if (err) {
-            debug('openReadStream error', err)
+            debug('mkdirp error', destDir, {error: err})
             cancelled = true
             return done(err)
           }
 
-          readStream.on('error', function (err) {
-            console.log('read err', err)
-          })
+          if (isDir) return done()
 
-          if (symlink) writeSymlink()
-          else writeStream()
-
-          function writeStream () {
-            var writeStream = fs.createWriteStream(dest, {mode: procMode})
-            readStream.pipe(writeStream)
-
-            writeStream.on('finish', function () {
-              done()
-            })
-
-            writeStream.on('error', function (err) {
-              debug('write error', {error: err})
+          debug('opening read stream', dest)
+          zipfile.openReadStream(entry, function (err, readStream) {
+            if (err) {
+              debug('openReadStream error', err)
               cancelled = true
               return done(err)
-            })
-          }
+            }
 
-          // AFAICT the content of the symlink file itself is the symlink target filename string
-          function writeSymlink () {
-            readStream.pipe(concat(function (data) {
-              var link = data.toString()
-              debug('creating symlink', link, dest)
-              fs.symlink(link, dest, function (err) {
-                if (err) cancelled = true
-                done(err)
+            readStream.on('error', function (err) {
+              console.log('read err', err)
+            })
+
+            if (symlink) writeSymlink()
+            else writeStream()
+
+            function writeStream () {
+              var writeStream = fs.createWriteStream(dest, {mode: procMode})
+              readStream.pipe(writeStream)
+
+              writeStream.on('finish', function () {
+                done()
               })
-            }))
-          }
+
+              writeStream.on('error', function (err) {
+                debug('write error', {error: err})
+                cancelled = true
+                return done(err)
+              })
+            }
+
+            // AFAICT the content of the symlink file itself is the symlink target filename string
+            function writeSymlink () {
+              readStream.pipe(concat(function (data) {
+                var link = data.toString()
+                debug('creating symlink', link, dest)
+                fs.symlink(link, dest, function (err) {
+                  if (err) cancelled = true
+                  done(err)
+                })
+              }))
+            }
+          })
         })
       }
     })
