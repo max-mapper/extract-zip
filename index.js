@@ -7,122 +7,134 @@ var concat = require('concat-stream')
 var debug = require('debug')('extract-zip')
 
 module.exports = function (zipPath, opts, cb) {
-  debug('opening', zipPath, 'with opts', opts)
-  yauzl.open(zipPath, {autoClose: false}, function (err, zipfile) {
+  debug('creating target directory', opts.dir)
+
+  mkdirp(opts.dir, function (err) {
     if (err) return cb(err)
+    openZip()
+  })
 
-    var cancelled = false
-    var finished = false
+  function openZip () {
+    debug('opening', zipPath, 'with opts', opts)
 
-    var q = async.queue(extractEntry, 1)
+    yauzl.open(zipPath, {autoClose: false}, function (err, zipfile) {
+      if (err) return cb(err)
 
-    q.drain = function () {
-      if (!finished) return
-      debug('zip extraction complete')
-      cb()
-    }
+      var cancelled = false
+      var finished = false
 
-    zipfile.on('entry', function (entry) {
-      debug('zipfile entry', entry.fileName)
+      var q = async.queue(extractEntry, 1)
 
-      if (/^__MACOSX\//.test(entry.fileName)) {
-        // dir name starts with __MACOSX/
-        return
+      q.drain = function () {
+        if (!finished) return
+        debug('zip extraction complete')
+        cb()
       }
 
-      q.push(entry, function (err) {
-        debug('finished processing', entry.fileName, {err: err})
+      zipfile.on('entry', function (entry) {
+        debug('zipfile entry', entry.fileName)
+
+        if (/^__MACOSX\//.test(entry.fileName)) {
+          // dir name starts with __MACOSX/
+          return
+        }
+
+        q.push(entry, function (err) {
+          debug('finished processing', entry.fileName, {err: err})
+        })
       })
-    })
 
-    zipfile.on('end', function () {
-      finished = true
-    })
+      zipfile.on('end', function () {
+        finished = true
+      })
 
-    function extractEntry (entry, done) {
-      if (cancelled) {
-        debug('skipping entry', entry.fileName, {cancelled: cancelled})
-        return setImmediate(done)
-      }
+      function extractEntry (entry, done) {
+        if (cancelled) {
+          debug('skipping entry', entry.fileName, {cancelled: cancelled})
+          return setImmediate(done)
+        }
 
-      var dest = path.join(opts.dir, entry.fileName)
-      var destDir = path.dirname(dest)
+        var dest = path.join(opts.dir, entry.fileName)
+        var destDir = path.dirname(dest)
 
-      // convert external file attr int into a fs stat mode int
-      var mode = (entry.externalFileAttributes >> 16) & 0xFFFF
-      // check if it's a symlink or dir (using stat mode constants)
-      var IFMT = 61440
-      var IFDIR = 16384
-      var IFLNK = 40960
-      var symlink = (mode & IFMT) === IFLNK
-      var isDir = (mode & IFMT) === IFDIR
+        // convert external file attr int into a fs stat mode int
+        var mode = (entry.externalFileAttributes >> 16) & 0xFFFF
+        // check if it's a symlink or dir (using stat mode constants)
+        var IFMT = 61440
+        var IFDIR = 16384
+        var IFLNK = 40960
+        var symlink = (mode & IFMT) === IFLNK
+        var isDir = (mode & IFMT) === IFDIR
 
-      // if no mode then default to readable
-      if (mode === 0) {
-        if (isDir) mode = 365 // 0555
-        else mode = 292 // 0444
-      }
+        // if no mode then default to readable
+        if (mode === 0) {
+          if (isDir) mode = 365 // 0555
+          else mode = 292 // 0444
+        }
 
-      debug('extracting entry', { filename: entry.fileName, isDir: isDir, isSymlink: symlink })
+        debug('extracting entry', { filename: entry.fileName, isDir: isDir, isSymlink: symlink })
 
-      // reverse umask first (~)
-      var umask = ~process.umask()
-      // & with processes umask to override invalid perms
-      var procMode = mode & umask
+        // reverse umask first (~)
+        var umask = ~process.umask()
+        // & with processes umask to override invalid perms
+        var procMode = mode & umask
 
-      if (isDir) {
-        debug('creating directory', dest)
-        return mkdirp(dest, function (err) {
+        if (isDir) {
+          debug('creating directory', dest)
+          return mkdirp(dest, function (err) {
+            if (err) {
+              debug('mkdirp error', destDir, {error: err})
+              cancelled = true
+              return done(err)
+            }
+            return done()
+          })
+        }
+
+        debug('opening read stream', dest)
+
+        zipfile.openReadStream(entry, function (err, readStream) {
           if (err) {
-            debug('mkdirp error', destDir, {error: err})
+            debug('openReadStream error', err)
             cancelled = true
             return done(err)
           }
-          return done()
-        })
-      }
 
-      debug('opening read stream', dest)
+          readStream.on('error', function (err) {
+            console.log('read err', err)
+          })
 
-      zipfile.openReadStream(entry, function (err, readStream) {
-        if (err) {
-          debug('openReadStream error', err)
-          cancelled = true
-          return done(err)
-        }
-
-        readStream.on('error', function (err) {
-          console.log('read err', err)
-        })
-
-        if (symlink) writeSymlink()
+          if (symlink) writeSymlink()
           else writeStream()
 
-        function writeStream () {
-          var writeStream = fs.createWriteStream(dest, {mode: procMode})
-          readStream.pipe(writeStream)
-          writeStream.on('finish', function () {
-            done()
-          })
-          writeStream.on('error', function (err) {
-            debug('write error', {error: err})
-            cancelled = true
-            return done(err)
-          })
-        }
+          function writeStream () {
+            var writeStream = fs.createWriteStream(dest, {mode: procMode})
+            readStream.pipe(writeStream)
 
-        // AFAICT the content of the symlink file itself is the symlink target filename string
-        function writeSymlink () {
-          readStream.pipe(concat(function (data) {
-            var link = data.toString()
-            debug('creating symlink', link, dest)
-            fs.symlink(link, dest, function (err) {
-              if (err) cancelled = true
-              done(err)
+            writeStream.on('finish', function () {
+              done()
             })
-          }))
-        }
-      })
-    }
-  })
+
+            writeStream.on('error', function (err) {
+              debug('write error', {error: err})
+              cancelled = true
+              return done(err)
+            })
+          }
+
+          // AFAICT the content of the symlink file itself is the symlink target filename string
+          function writeSymlink () {
+            readStream.pipe(concat(function (data) {
+              var link = data.toString()
+              debug('creating symlink', link, dest)
+              fs.symlink(link, dest, function (err) {
+                if (err) cancelled = true
+                done(err)
+              })
+            }))
+          }
+        })
+      }
+    })
+  }
 }
