@@ -44,9 +44,10 @@ extract(source, {dir: target}, function(err) {
 
     test('directories', function (t) {
 
-        var dirWithContent = path.join(results, 'orange');
+        var dirWithContent = path.join(results, 'orange'),
+            dirWithoutContent = path.join(results, 'empty');
 
-        t.plan(3);
+        t.plan(6);
 
         fs.exists(dirWithContent, function (exists) {
             t.ok(exists, 'directory created');
@@ -55,6 +56,15 @@ extract(source, {dir: target}, function(err) {
         fs.readdir(dirWithContent, function (err, files) {
             t.same(err, null, 'directory can be read');
             t.ok(files.length > 0, 'directory has files');
+        });
+
+        fs.exists(dirWithoutContent, function (exists) {
+            t.ok(exists, 'empty directory created');
+        });
+
+        fs.readdir(dirWithoutContent, function (err, files) {
+            t.same(err, null, 'empty directory can be read');
+            t.ok(files.length === 0, 'empty directory has no files');
         });
 
     });

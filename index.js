@@ -10,51 +10,44 @@ module.exports = function(zipPath, opts, cb) {
   debug('opening', zipPath, 'with opts', opts)
   yauzl.open(zipPath, {autoClose: false}, function(err, zipfile) {
     if (err) return cb(err)
-    
+
     var cancelled = false
     var finished = false
-    
+
     var q = async.queue(extractEntry, 1)
-    
+
     q.drain = function() {
       if (!finished) return
       debug('zip extraction complete')
       cb()
     }
-    
+
     zipfile.on("entry", function(entry) {
       debug('zipfile entry', entry.fileName)
-      
-      if (/\/$/.test(entry.fileName)) {
-        // directory file names end with '/'
-        return
-      }
-      
+
       if (/^__MACOSX\//.test(entry.fileName)) {
         // dir name starts with __MACOSX/
         return
       }
-      
+
       q.push(entry, function(err) {
         debug('finished processing', entry.fileName, {err: err})
       })
     })
-    
+
     zipfile.on('end', function() {
       finished = true
     })
-    
+
     function extractEntry(entry, done) {
       if (cancelled) {
         debug('skipping entry', entry.fileName, {cancelled: cancelled})
         return setImmediate(done)
-      } else {
-        debug('extracting entry', entry.fileName)
       }
-      
+
       var dest = path.join(opts.dir, entry.fileName)
       var destDir = path.dirname(dest)
-        
+
       // convert external file attr int into a fs stat mode int
       var mode = (entry.externalFileAttributes >> 16) & 0xFFFF
       // check if it's a symlink or dir (using stat mode constants)
@@ -63,17 +56,33 @@ module.exports = function(zipPath, opts, cb) {
       var IFLNK = 40960
       var symlink = (mode & IFMT) === IFLNK
       var isDir = (mode & IFMT) === IFDIR
-      
+
       // if no mode then default to readable
       if (mode === 0) {
         if (isDir) mode = 0555
         else mode = 0444
       }
-      
+
+      debug('extracting entry', { filename: entry.fileName, isDir: isDir, isSymlink: symlink })
+
       // reverse umask first (~)
       var umask = ~process.umask()
       // & with processes umask to override invalid perms
       var procMode = mode & umask
+
+      if (isDir) {
+        debug('creating directory', dest)
+        return mkdirp(dest, function (err) {
+          if (err) {
+            debug('mkdirp error', destDir, {error: err})
+            cancelled = true
+            return done(err)
+          }
+          return done()
+        })
+      }
+
+      debug('opening read stream', dest)
 
       zipfile.openReadStream(entry, function(err, readStream) {
         if (err) {
@@ -81,22 +90,14 @@ module.exports = function(zipPath, opts, cb) {
           cancelled = true
           return done(err)
         }
-        
+
         readStream.on('error', function(err) {
           console.log('read err', err)
         })
 
-        mkdirp(destDir, function(err) {
-          if (err) {
-            debug('mkdirp error', destDir, {error: err})
-            cancelled = true
-            return done(err)
-          }
-
-          if (symlink) writeSymlink()
+        if (symlink) writeSymlink()
           else writeStream()
-        })
-        
+
         function writeStream() {
           var writeStream = fs.createWriteStream(dest, {mode: procMode})
           readStream.pipe(writeStream)
@@ -109,7 +110,7 @@ module.exports = function(zipPath, opts, cb) {
             return done(err)
           })
         }
-        
+
         // AFAICT the content of the symlink file itself is the symlink target filename string
         function writeSymlink() {
           readStream.pipe(concat(function(data) {
@@ -121,8 +122,8 @@ module.exports = function(zipPath, opts, cb) {
             })
           }))
         }
-        
-      })        
+
+      })
     }
 
   })
