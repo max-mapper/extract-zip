@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-var path = require('path')
-var minimist = require('minimist')
 var extract = require('./')
 
 var args = process.argv.slice(2)
@@ -12,7 +10,7 @@ if (!source) {
   process.exit(1)
 }
 
-extract(source, {dir: dest}, function(err, results) {
+extract(source, {dir: dest}, function (err, results) {
   if (err) {
     console.error('error!', err)
     process.exit(1)

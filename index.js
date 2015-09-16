@@ -6,9 +6,9 @@ var mkdirp = require('mkdirp')
 var concat = require('concat-stream')
 var debug = require('debug')('extract-zip')
 
-module.exports = function(zipPath, opts, cb) {
+module.exports = function (zipPath, opts, cb) {
   debug('opening', zipPath, 'with opts', opts)
-  yauzl.open(zipPath, {autoClose: false}, function(err, zipfile) {
+  yauzl.open(zipPath, {autoClose: false}, function (err, zipfile) {
     if (err) return cb(err)
 
     var cancelled = false
@@ -16,13 +16,13 @@ module.exports = function(zipPath, opts, cb) {
 
     var q = async.queue(extractEntry, 1)
 
-    q.drain = function() {
+    q.drain = function () {
       if (!finished) return
       debug('zip extraction complete')
       cb()
     }
 
-    zipfile.on("entry", function(entry) {
+    zipfile.on('entry', function (entry) {
       debug('zipfile entry', entry.fileName)
 
       if (/^__MACOSX\//.test(entry.fileName)) {
@@ -30,16 +30,16 @@ module.exports = function(zipPath, opts, cb) {
         return
       }
 
-      q.push(entry, function(err) {
+      q.push(entry, function (err) {
         debug('finished processing', entry.fileName, {err: err})
       })
     })
 
-    zipfile.on('end', function() {
+    zipfile.on('end', function () {
       finished = true
     })
 
-    function extractEntry(entry, done) {
+    function extractEntry (entry, done) {
       if (cancelled) {
         debug('skipping entry', entry.fileName, {cancelled: cancelled})
         return setImmediate(done)
@@ -59,8 +59,8 @@ module.exports = function(zipPath, opts, cb) {
 
       // if no mode then default to readable
       if (mode === 0) {
-        if (isDir) mode = 0555
-        else mode = 0444
+        if (isDir) mode = 365 // 0555
+        else mode = 292 // 0444
       }
 
       debug('extracting entry', { filename: entry.fileName, isDir: isDir, isSymlink: symlink })
@@ -84,27 +84,27 @@ module.exports = function(zipPath, opts, cb) {
 
       debug('opening read stream', dest)
 
-      zipfile.openReadStream(entry, function(err, readStream) {
+      zipfile.openReadStream(entry, function (err, readStream) {
         if (err) {
           debug('openReadStream error', err)
           cancelled = true
           return done(err)
         }
 
-        readStream.on('error', function(err) {
+        readStream.on('error', function (err) {
           console.log('read err', err)
         })
 
         if (symlink) writeSymlink()
           else writeStream()
 
-        function writeStream() {
+        function writeStream () {
           var writeStream = fs.createWriteStream(dest, {mode: procMode})
           readStream.pipe(writeStream)
-          writeStream.on('finish', function() {
+          writeStream.on('finish', function () {
             done()
           })
-          writeStream.on('error', function(err) {
+          writeStream.on('error', function (err) {
             debug('write error', {error: err})
             cancelled = true
             return done(err)
@@ -112,19 +112,17 @@ module.exports = function(zipPath, opts, cb) {
         }
 
         // AFAICT the content of the symlink file itself is the symlink target filename string
-        function writeSymlink() {
-          readStream.pipe(concat(function(data) {
+        function writeSymlink () {
+          readStream.pipe(concat(function (data) {
             var link = data.toString()
             debug('creating symlink', link, dest)
-            fs.symlink(link, dest, function(err) {
+            fs.symlink(link, dest, function (err) {
               if (err) cancelled = true
               done(err)
             })
           }))
         }
-
       })
     }
-
   })
 }

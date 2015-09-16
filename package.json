@@ -7,13 +7,13 @@
     "extract-zip": "cli.js"
   },
   "scripts": {
-    "test": "node test/test.js"
+    "test": "standard && node test/test.js"
   },
   "author": "max ogden",
-  "license": "BSD",
+  "license": "BSD-2-Clause",
   "repository": {
     "type": "git",
-    "url": "git@github.com:maxogden/extract-zip.git"
+    "url": "git+ssh://git@github.com/maxogden/extract-zip.git"
   },
   "keywords": [
     "unzip",
@@ -25,16 +25,15 @@
   },
   "homepage": "https://github.com/maxogden/extract-zip",
   "dependencies": {
-    "minimist": "0.1.0",
     "debug": "0.7.4",
     "async": "0.9.0",
     "mkdirp": "0.5.0",
-    "concat-stream": "^1.4.6",
-    "through2": "0.6.3",
-    "yauzl": "^2.1.0"
+    "concat-stream": "1.5.0",
+    "yauzl": "^2.3.1"
   },
   "devDependencies": {
     "rimraf": "^2.2.8",
+    "standard": "^5.2.2",
     "tape": "^4.2.0"
   },
   "directories": {
