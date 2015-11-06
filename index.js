@@ -72,8 +72,8 @@ module.exports = function (zipPath, opts, cb) {
 
         // if no mode then default to readable
         if (mode === 0) {
-          if (isDir) mode = 365 // 0555
-          else mode = 292 // 0444
+          if (isDir) mode = parseInt(opts.defaultDirMode,8) || 493 // Default to 0755
+          else mode = parseInt(opts.defaultFileMode,8) || 420 // Default to 0644
         }
 
         debug('extracting entry', { filename: entry.fileName, isDir: isDir, isSymlink: symlink })

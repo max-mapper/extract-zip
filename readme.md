@@ -7,8 +7,6 @@ Uses the [`yauzl`](http://npmjs.org/yauzl) ZIP parser.
 [![NPM](https://nodei.co/npm/extract-zip.png?global=true)](https://nodei.co/npm/extract-zip/)
 [![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
 
-[![build status](http://img.shields.io/travis/maxogden/extract-zip.svg?style=flat)](http://travis-ci.org/maxogden/extract-zip)
-
 ## Installation
 
 Get the library:
@@ -27,12 +25,15 @@ npm install extract-zip -g
 
 ```js
 var extract = require('extract-zip')
-extract(source, {dir: target}, function(err) {
+extract(source, {dir: target, defaultDirMode: 0XXX, defaultFileMode: 0XXX}, function(err) {
 
 })
 ```
 
 If not specified, `dir` will default to `process.cwd()`.
+If not specified, Directory Mode (permissions) will default to `0755`. 
+If not specified, File Mode (permissions) will default to `0644`.
+DefaultModes are only used if no permissions are set in the zip file.
 
 ## CLI Usage
 
