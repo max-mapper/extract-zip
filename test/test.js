@@ -5,62 +5,89 @@ var test = require('tape')
 var fs = require('fs')
 var extract = require('../')
 
-var source = path.join(__dirname, 'cats.zip')
-var target = path.join(os.tmpdir(), 'cat-extract-test')
-var results = path.join(target, 'cats')
+var sourceA = path.join(__dirname, 'cats.zip')
+var targetA = path.join(os.tmpdir(), 'cat-extract-test')
+var resultsA = path.join(targetA, 'cats')
 
-rimraf.sync(target)
+var sourceB = path.join(__dirname, 'github.zip')
+var targetB = os.tmpdir()
+var resultsB = path.join(targetB, 'extract-zip-master')
 
-console.log('extracting to', target)
+test('extract cat zip', function (t) {
+  rimraf.sync(targetA)
 
-extract(source, {dir: target}, function (err) {
-  if (err) throw err
+  console.log('extracting to', targetA)
 
-  test('files', function (t) {
-    t.plan(1)
+  extract(sourceA, {dir: targetA}, function (err) {
+    if (err) throw err
+    t.false(err, 'no error')
+    t.end()
+  })
+})
 
-    fs.exists(path.join(results, 'gJqEYBs.jpg'), function (exists) {
-      t.ok(exists, 'file created')
-    })
+test('files', function (t) {
+  t.plan(1)
+
+  fs.exists(path.join(resultsA, 'gJqEYBs.jpg'), function (exists) {
+    t.ok(exists, 'file created')
+  })
+})
+
+test('symlinks', function (t) {
+  var symlink = path.join(resultsA, 'orange_symlink')
+
+  t.plan(3)
+
+  fs.exists(symlink, function (exists) {
+    t.ok(exists, 'symlink created')
   })
 
-  test('symlinks', function (t) {
-    var symlink = path.join(results, 'orange_symlink')
+  fs.lstat(symlink, function (err, stats) {
+    t.same(err, null, 'symlink can be stat\'d')
+    t.ok(stats.isSymbolicLink(), 'symlink is valid')
+  })
+})
 
-    t.plan(3)
+test('directories', function (t) {
+  var dirWithContent = path.join(resultsA, 'orange')
+  var dirWithoutContent = path.join(resultsA, 'empty')
 
-    fs.exists(symlink, function (exists) {
-      t.ok(exists, 'symlink created')
-    })
+  t.plan(6)
 
-    fs.lstat(symlink, function (err, stats) {
-      t.same(err, null, 'symlink can be stat\'d')
-      t.ok(stats.isSymbolicLink(), 'symlink is valid')
-    })
+  fs.exists(dirWithContent, function (exists) {
+    t.ok(exists, 'directory created')
   })
 
-  test('directories', function (t) {
-    var dirWithContent = path.join(results, 'orange')
-    var dirWithoutContent = path.join(results, 'empty')
+  fs.readdir(dirWithContent, function (err, files) {
+    t.same(err, null, 'directory can be read')
+    t.ok(files.length > 0, 'directory has files')
+  })
 
-    t.plan(6)
+  fs.exists(dirWithoutContent, function (exists) {
+    t.ok(exists, 'empty directory created')
+  })
 
-    fs.exists(dirWithContent, function (exists) {
-      t.ok(exists, 'directory created')
-    })
+  fs.readdir(dirWithoutContent, function (err, files) {
+    t.same(err, null, 'empty directory can be read')
+    t.ok(files.length === 0, 'empty directory has no files')
+  })
+})
 
-    fs.readdir(dirWithContent, function (err, files) {
-      t.same(err, null, 'directory can be read')
-      t.ok(files.length > 0, 'directory has files')
-    })
+test('extract github zip', function (t) {
+  rimraf.sync(targetB)
 
-    fs.exists(dirWithoutContent, function (exists) {
-      t.ok(exists, 'empty directory created')
-    })
+  console.log('extracting to', targetB)
 
-    fs.readdir(dirWithoutContent, function (err, files) {
-      t.same(err, null, 'empty directory can be read')
-      t.ok(files.length === 0, 'empty directory has no files')
-    })
+  extract(sourceB, {dir: targetB}, function (err) {
+    if (err) throw err
+    t.false(err, 'no error')
+    t.end()
+  })
+})
+
+test('verify extraction worked', function (t) {
+  fs.exists(path.join(resultsB, 'test'), function (exists) {
+    t.ok(exists, 'folder created')
+    t.end()
   })
 })

@@ -65,6 +65,11 @@ module.exports = function (zipPath, opts, cb) {
         var symlink = (mode & IFMT) === IFLNK
         var isDir = (mode & IFMT) === IFDIR
 
+        // check for windows weird way of specifying a directory
+        // https://github.com/maxogden/extract-zip/issues/13#issuecomment-154494566
+        var madeBy = entry.versionMadeBy >> 8
+        if (!isDir) isDir = (madeBy === 0 && entry.externalFileAttributes === 16)
+
         // if no mode then default to readable
         if (mode === 0) {
           if (isDir) mode = 365 // 0555
