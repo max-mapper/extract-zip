@@ -73,10 +73,10 @@ module.exports = function (zipPath, opts, cb) {
         // if no mode then default to default modes
         if (mode === 0) {
           if (isDir) {
-            if (opts.defaultDirMode) mode = parseInt(opts.defaultDirMode, 8)
+            if (opts.defaultDirMode) mode = parseInt(opts.defaultDirMode, 10)
             if (!mode) mode = 493 // Default to 0755
           } else {
-            if (opts.defaultFileMode) mode = parseInt(opts.defaultFileMode, 8)
+            if (opts.defaultFileMode) mode = parseInt(opts.defaultFileMode, 10)
             if (!mode) mode = 420 // Default to 0644
           }
         }

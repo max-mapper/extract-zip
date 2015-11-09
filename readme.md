@@ -33,8 +33,8 @@ extract(source, {dir: target}, function (err) {
 ### Options
 
 - `dir` - defaults to `process.cwd()`
-- `defaultDirMode` - Directory Mode (permissions) will default to `0755`
-- `defaultFileMode` - File Mode (permissions) will default to `0644`
+- `defaultDirMode` - integer - Directory Mode (permissions) will default to `493` (octal `0755` in integer)
+- `defaultFileMode` - integer - File Mode (permissions) will default to `420` (octal `0644` in integer)
 
 Default modes are only used if no permissions are set in the zip file.
 
