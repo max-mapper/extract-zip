@@ -25,15 +25,18 @@ npm install extract-zip -g
 
 ```js
 var extract = require('extract-zip')
-extract(source, {dir: target, defaultDirMode: 0XXX, defaultFileMode: 0XXX}, function(err) {
-
+extract(source, {dir: target}, function (err) {
+ // extraction is complete. make sure to handle the err
 })
 ```
 
-If not specified, `dir` will default to `process.cwd()`.
-If not specified, Directory Mode (permissions) will default to `0755`. 
-If not specified, File Mode (permissions) will default to `0644`.
-DefaultModes are only used if no permissions are set in the zip file.
+### Options
+
+- `dir` - defaults to `process.cwd()`
+- `defaultDirMode` - Directory Mode (permissions) will default to `0755`
+- `defaultFileMode` - File Mode (permissions) will default to `0644`
+
+Default modes are only used if no permissions are set in the zip file.
 
 ## CLI Usage
 
