@@ -70,7 +70,7 @@ module.exports = function (zipPath, opts, cb) {
         var madeBy = entry.versionMadeBy >> 8
         if (!isDir) isDir = (madeBy === 0 && entry.externalFileAttributes === 16)
 
-        // if no mode then default to readable
+        // if no mode then default to default modes
         if (mode === 0) {
           if (isDir) {
             if (opts.defaultDirMode) mode = parseInt(opts.defaultDirMode, 8)
