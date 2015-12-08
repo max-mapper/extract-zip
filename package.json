@@ -25,11 +25,11 @@
   },
   "homepage": "https://github.com/maxogden/extract-zip",
   "dependencies": {
-    "debug": "0.7.4",
-    "async": "0.9.0",
-    "mkdirp": "0.5.0",
+    "async": "1.5.0",
     "concat-stream": "1.5.0",
-    "yauzl": "^2.3.1"
+    "debug": "0.7.4",
+    "mkdirp": "0.5.0",
+    "yauzl": "2.3.1"
   },
   "devDependencies": {
     "rimraf": "^2.2.8",

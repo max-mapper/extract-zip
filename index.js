@@ -32,6 +32,11 @@ module.exports = function (zipPath, opts, cb) {
       }
 
       zipfile.on('entry', function (entry) {
+        if (cancelled) {
+          debug('skipping entry', entry.fileName, {cancelled: cancelled})
+          return
+        }
+
         debug('zipfile entry', entry.fileName)
 
         if (/^__MACOSX\//.test(entry.fileName)) {
@@ -40,7 +45,14 @@ module.exports = function (zipPath, opts, cb) {
         }
 
         q.push(entry, function (err) {
-          debug('finished processing', entry.fileName, {err: err})
+          // if any extraction fails then abort everything
+          if (err) {
+            cancelled = true
+            q.kill()
+            zipfile.close()
+            return cb(err)
+          }
+          debug('finished processing', entry.fileName)
         })
       })
 
@@ -50,7 +62,7 @@ module.exports = function (zipPath, opts, cb) {
 
       function extractEntry (entry, done) {
         if (cancelled) {
-          debug('skipping entry', entry.fileName, {cancelled: cancelled})
+          debug('skipping entry extraction', entry.fileName, {cancelled: cancelled})
           return setImmediate(done)
         }
 
