@@ -20,7 +20,6 @@ module.exports = function (zipPath, opts, cb) {
       if (err) return cb(err)
 
       var cancelled = false
-      var finished = false
 
       zipfile.readEntry()
 
