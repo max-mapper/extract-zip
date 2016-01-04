@@ -24,8 +24,10 @@ module.exports = function (zipPath, opts, cb) {
       zipfile.readEntry()
 
       zipfile.on('close', function () {
-        debug('zip extraction complete')
-        cb()
+        if (!cancelled) {
+          debug('zip extraction complete')
+          cb()
+        }
       })
 
       zipfile.on('entry', function (entry) {

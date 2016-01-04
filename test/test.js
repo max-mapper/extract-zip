@@ -13,6 +13,9 @@ var sourceB = path.join(__dirname, 'github.zip')
 var targetB = os.tmpdir()
 var resultsB = path.join(targetB, 'extract-zip-master')
 
+var sourceC = path.join(__dirname, 'symlink.zip')
+var targetC = os.tmpdir()
+
 test('extract cat zip', function (t) {
   rimraf.sync(targetA)
 
@@ -89,5 +92,24 @@ test('verify extraction worked', function (t) {
   fs.exists(path.join(resultsB, 'test'), function (exists) {
     t.ok(exists, 'folder created')
     t.end()
+  })
+})
+
+test('callback called once', function (t) {
+  rimraf.sync(targetC)
+
+  t.plan(2)
+
+  console.log('extracting to', targetC)
+
+  extract(sourceC, {dir: targetC}, function (err) {
+    if (err) throw err
+
+    // this triggers an error due to symlink creation
+    extract(sourceC, {dir: targetC}, function (err) {
+      if (err) t.ok(true, 'error passed')
+
+      t.ok(true, 'callback called')
+    })
   })
 })
