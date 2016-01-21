@@ -7,7 +7,7 @@ var debug = require('debug')('extract-zip')
 
 module.exports = function (zipPath, opts, cb) {
   debug('creating target directory', opts.dir)
-  opts.overwrite = opts.overwrite || false
+  opts.overwrite = (typeof opts.overwrite === 'undefined') ? true : opts.overwrite
 
   mkdirp(opts.dir, function (err) {
     if (err) return cb(err)
@@ -131,7 +131,7 @@ module.exports = function (zipPath, opts, cb) {
 
             function writeStream () {
               var writeFlag = opts.overwrite ? 'w' : 'wx'
-              var writeStream = fs.createWriteStream(dest, {mode: procMode, flag: writeFlag})
+              var writeStream = fs.createWriteStream(dest, {mode: procMode, flags: writeFlag})
               readStream.pipe(writeStream)
 
               writeStream.on('finish', function () {
