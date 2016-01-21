@@ -7,6 +7,7 @@ var debug = require('debug')('extract-zip')
 
 module.exports = function (zipPath, opts, cb) {
   debug('creating target directory', opts.dir)
+  opts.overwrite = opts.overwrite || false
 
   mkdirp(opts.dir, function (err) {
     if (err) return cb(err)
@@ -122,11 +123,15 @@ module.exports = function (zipPath, opts, cb) {
               console.log('read err', err)
             })
 
-            if (symlink) writeSymlink()
+            if (symlink) {
+              if (opts.overwrite) overwriteExistingSymlink()
+              else writeSymlink()
+            }
             else writeStream()
 
             function writeStream () {
-              var writeStream = fs.createWriteStream(dest, {mode: procMode})
+              var writeFlag = opts.overwrite ? 'w' : 'wx'
+              var writeStream = fs.createWriteStream(dest, {mode: procMode, flag: writeFlag})
               readStream.pipe(writeStream)
 
               writeStream.on('finish', function () {
@@ -137,6 +142,17 @@ module.exports = function (zipPath, opts, cb) {
                 debug('write error', {error: err})
                 cancelled = true
                 return done(err)
+              })
+            }
+            // Attempt to delete an existing symlink before attempting to write
+            function overwriteExistingSymlink () {
+              fs.unlink(dest, function (err) {
+                if (err) {
+                  if (err.code === 'ENOENT') return writeSymlink()
+                  cancelled = true
+                  done(err)
+                }
+                writeSymlink()
               })
             }
 
