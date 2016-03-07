@@ -62,6 +62,10 @@ module.exports = function (zipPath, opts, cb) {
           return setImmediate(done)
         }
 
+        if (opts.onEntry) {
+          opts.onEntry(entry)
+        }
+
         var dest = path.join(opts.dir, entry.fileName)
 
         // convert external file attr int into a fs stat mode int
