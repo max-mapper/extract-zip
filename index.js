@@ -67,8 +67,9 @@ module.exports = function (zipPath, opts, cb) {
         }
 
         var strip = opts.strip || 0
-        var filenameParts = entry.fileName.split(path.sep)
-        var destParts = [opts.dir].concat(filenameParts.slice(strip))
+        var filenameParts = entry.fileName.split('/')
+        filenameParts.splice(0, Math.min(strip, filenameParts.length - 1))
+        var destParts = [opts.dir].concat(filenameParts)
         var dest = path.join.apply(path, destParts)
 
         // convert external file attr int into a fs stat mode int
