@@ -36,6 +36,7 @@ extract(source, {dir: target}, function (err) {
 - `defaultDirMode` - integer - Directory Mode (permissions) will default to `493` (octal `0755` in integer)
 - `defaultFileMode` - integer - File Mode (permissions) will default to `420` (octal `0644` in integer)
 - `onEntry` - function - if present, will be called with every entry from the zip file. forwarded from the `entry` event from yauzl.
+- `strip` - integer - number of leading directory components to remove from extracted files.
 
 Default modes are only used if no permissions are set in the zip file.
 
