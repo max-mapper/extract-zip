@@ -5,7 +5,7 @@ var mkdirp = require('mkdirp')
 var concat = require('concat-stream')
 var debug = require('debug')('extract-zip')
 
-module.exports = function (zipPath, opts, cb) {
+module.exports = function (zipPath, opts, cb, createWriteStreamFn) {
   debug('creating target directory', opts.dir)
 
   mkdirp(opts.dir, function (err) {
@@ -130,7 +130,7 @@ module.exports = function (zipPath, opts, cb) {
             else writeStream()
 
             function writeStream () {
-              var writeStream = fs.createWriteStream(dest, {mode: procMode})
+              var writeStream = createWriteStreamFn(dest, {mode: procMode})
               readStream.pipe(writeStream)
 
               writeStream.on('finish', function () {
