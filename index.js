@@ -8,10 +8,14 @@ var debug = require('debug')('extract-zip')
 module.exports = function (zipPath, opts, cb, createWriteStreamFn) {
   debug('creating target directory', opts.dir)
 
-  mkdirp(opts.dir, function (err) {
-    if (err) return cb(err)
+  if (opts.dir) {
+    mkdirp(opts.dir, function (err) {
+      if (err) return cb(err)
+      openZip()
+    })
+  } else {
     openZip()
-  })
+  }
 
   function openZip () {
     debug('opening', zipPath, 'with opts', opts)
@@ -64,6 +68,10 @@ module.exports = function (zipPath, opts, cb, createWriteStreamFn) {
 
         if (opts.onEntry) {
           opts.onEntry(entry)
+        }
+
+        if (!opts.dir) {
+          return done()
         }
 
         var dest = path.join(opts.dir, entry.fileName)
@@ -131,7 +139,7 @@ module.exports = function (zipPath, opts, cb, createWriteStreamFn) {
 
             function writeStream () {
               var writeStream = createWriteStreamFn(dest, {mode: procMode})
-              readStream.pipe(writeStream)
+              readStream.pipe(writeStream)g
 
               writeStream.on('finish', function () {
                 done()
