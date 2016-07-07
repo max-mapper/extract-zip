@@ -138,8 +138,9 @@ module.exports = function (zipPath, opts, cb, createWriteStreamFn) {
             else writeStream()
 
             function writeStream () {
-              var writeStream = createWriteStreamFn(dest, {mode: procMode})
-              readStream.pipe(writeStream)g
+              var writeStream = createWriteStreamFn ?
+                createWriteStreamFn(dest, {mode: procMode}) : fs.createWriteStream(dest, {mode: procMode});
+              readStream.pipe(writeStream)
 
               writeStream.on('finish', function () {
                 done()
