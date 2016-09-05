@@ -77,6 +77,11 @@ module.exports = function (zipPath, opts, cb) {
         var symlink = (mode & IFMT) === IFLNK
         var isDir = (mode & IFMT) === IFDIR
 
+        // Failsafe, borrowed from jsZip
+        if (!isDir && entry.fileName.slice(-1) === '/') {
+          isDir = true
+        }
+
         // check for windows weird way of specifying a directory
         // https://github.com/maxogden/extract-zip/issues/13#issuecomment-154494566
         var madeBy = entry.versionMadeBy >> 8
