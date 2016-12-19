@@ -63,7 +63,7 @@ module.exports = function (zipPath, opts, cb) {
         }
 
         if (opts.onEntry) {
-          opts.onEntry(entry)
+          opts.onEntry(entry, zipfile)
         }
 
         var dest = path.join(opts.dir, entry.fileName)
