@@ -1,7 +1,7 @@
 {
   "name": "extract-zip",
   "version": "1.6.0",
-  "description": "unzip a zip file into a directory using 100% pure gluten-free organic javascript",
+  "description": "unzip a zip file into a directory using 100% pure javascript",
   "main": "index.js",
   "bin": {
     "extract-zip": "cli.js"
