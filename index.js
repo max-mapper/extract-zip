@@ -8,9 +8,20 @@ var debug = require('debug')('extract-zip')
 module.exports = function (zipPath, opts, cb) {
   debug('creating target directory', opts.dir)
 
+  if (path.isAbsolute(opts.dir) === false) {
+    return cb(new Error('Target directory is expected to be absolute'))
+  }
+
   mkdirp(opts.dir, function (err) {
     if (err) return cb(err)
-    openZip()
+
+    fs.realpath(opts.dir, function (err, canonicalDir) {
+      if (err) return cb(err)
+
+      opts.dir = canonicalDir
+
+      openZip(opts)
+    })
   })
 
   function openZip () {
@@ -44,15 +55,33 @@ module.exports = function (zipPath, opts, cb) {
           return
         }
 
-        extractEntry(entry, function (err) {
-          // if any extraction fails then abort everything
+        var destDir = path.dirname(path.join(opts.dir, entry.fileName))
+
+        fs.realpath(destDir, function (err, canonicalDestDir) {
           if (err) {
             cancelled = true
             zipfile.close()
             return cb(err)
           }
-          debug('finished processing', entry.fileName)
-          zipfile.readEntry()
+
+          var relativeDestDir = path.relative(opts.dir, canonicalDestDir)
+
+          if (relativeDestDir.split(path.sep).indexOf('..') !== -1) {
+            cancelled = true
+            zipfile.close()
+            return cb(new Error('Out of bound path "' + canonicalDestDir + '" found while processing file ' + entry.fileName))
+          }
+
+          extractEntry(entry, function (err) {
+            // if any extraction fails then abort everything
+            if (err) {
+              cancelled = true
+              zipfile.close()
+              return cb(err)
+            }
+            debug('finished processing', entry.fileName)
+            zipfile.readEntry()
+          })
         })
       })
 
@@ -76,6 +105,11 @@ module.exports = function (zipPath, opts, cb) {
         var IFLNK = 40960
         var symlink = (mode & IFMT) === IFLNK
         var isDir = (mode & IFMT) === IFDIR
+
+        // Failsafe, borrowed from jsZip
+        if (!isDir && entry.fileName.slice(-1) === '/') {
+          isDir = true
+        }
 
         // check for windows weird way of specifying a directory
         // https://github.com/maxogden/extract-zip/issues/13#issuecomment-154494566

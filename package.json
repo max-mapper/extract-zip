@@ -13,7 +13,7 @@
   "license": "BSD-2-Clause",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/maxogden/extract-zip.git"
+    "url": "git+ssh://git@github.com/erisds/extract-zip-fork.git"
   },
   "keywords": [
     "unzip",

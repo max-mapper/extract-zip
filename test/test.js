@@ -16,6 +16,13 @@ var resultsB = path.join(targetB, 'extract-zip-master')
 var sourceC = path.join(__dirname, 'symlink.zip')
 var targetC = os.tmpdir()
 
+var sourceD = path.join(__dirname, 'cats.zip')
+var targetD = './cats'
+
+var sourceE = path.join(__dirname, 'symlink-dest.zip')
+var targetE = os.tmpdir()
+var resultsE = path.join(targetB, 'symlink-dest')
+
 test('extract cat zip', function (t) {
   rimraf.sync(targetA)
 
@@ -111,5 +118,68 @@ test('callback called once', function (t) {
 
       t.ok(true, 'callback called')
     })
+  })
+})
+
+test('relative target directory', function (t) {
+  rimraf.sync(targetD)
+
+  console.log('extracting to', targetD)
+
+  extract(sourceD, {dir: targetD}, function (err) {
+    t.true(err instanceof Error, 'is native V8 error')
+    t.same(err.message, 'Target directory is expected to be absolute', 'has descriptive error message')
+    t.end()
+  })
+})
+
+test('no folder created', function (t) {
+  t.plan(1)
+
+  fs.exists(path.join(__dirname, targetD), function (exists) {
+    t.false(exists, 'file not created')
+  })
+})
+
+test('symlink destination disallowed', function (t) {
+  rimraf.sync(targetE)
+
+  var canonicalTmp = fs.realpathSync('/tmp')
+
+  t.plan(3)
+
+  fs.exists('/tmp/file.txt', function (exists) {
+    t.false(exists, 'file doesn\'t exist at symlink target')
+  })
+
+  console.log('extracting to', targetE)
+
+  extract(sourceE, {dir: targetE}, function (err) {
+    t.true(err instanceof Error, 'is native V8 error')
+    t.same(err.message, 'Out of bound path "' + canonicalTmp + '" found while processing file symlink-dest/aaa/file.txt', 'has descriptive error message')
+  })
+})
+
+test('no file created out of bound', function (t) {
+  t.plan(5)
+
+  fs.exists(resultsE, function (exists) {
+    t.true(exists, 'target folder created')
+  })
+
+  fs.exists(path.join(resultsE, 'aaa'), function (exists) {
+    t.true(exists, 'symlink created')
+  })
+
+  fs.exists(path.join(resultsE, 'ccc'), function (exists) {
+    t.true(exists, 'parent folder created')
+  })
+
+  fs.exists(path.join(resultsE, 'ccc/file.txt'), function (exists) {
+    t.false(exists, 'file not created in original folder')
+  })
+
+  fs.exists('/tmp/file.txt', function (exists) {
+    t.false(exists, 'file not created in symlink target')
   })
 })
