@@ -35,6 +35,25 @@ test('extract cat zip', function (t) {
   })
 })
 
+test('extract cat zip to same dir without overwrite', function (t) {
+  console.log('extracting again to', targetA)
+
+  extract(sourceA, {dir: targetA, overwrite: false}, function (err) {
+    if (err) t.ok(true, 'error passed')
+    t.end()
+  })
+})
+
+test('extract cat zip to same dir with overwrite', function (t) {
+  console.log('extracting again to', targetA)
+
+  extract(sourceA, {dir: targetA, overwrite: true}, function (err) {
+    if (err) throw err
+    t.false(err, 'no error')
+    t.end()
+  })
+})
+
 test('files', function (t) {
   t.plan(1)
 
@@ -102,6 +121,16 @@ test('verify extraction worked', function (t) {
   })
 })
 
+test('extract github zip again without overwrite', function (t) {
+  console.log('extracting again to', targetB)
+  t.plan(1)
+
+  extract(sourceB, {dir: targetB, overwrite: false}, function (err) {
+    if (err) t.ok(true, 'error passed')
+    t.end()
+  })
+})
+
 test('callback called once', function (t) {
   rimraf.sync(targetC)
 
@@ -113,9 +142,8 @@ test('callback called once', function (t) {
     if (err) throw err
 
     // this triggers an error due to symlink creation
-    extract(sourceC, {dir: targetC}, function (err) {
+    extract(sourceC, {dir: targetC, overwrite: false}, function (err) {
       if (err) t.ok(true, 'error passed')
-
       t.ok(true, 'callback called')
     })
   })
