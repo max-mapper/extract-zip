@@ -11,19 +11,12 @@
   },
   "author": "max ogden",
   "license": "BSD-2-Clause",
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/erisds/extract-zip-fork.git"
-  },
+  "repository": "maxogden/extract-zip",
   "keywords": [
     "unzip",
     "zip",
     "extract"
   ],
-  "bugs": {
-    "url": "https://github.com/maxogden/extract-zip/issues"
-  },
-  "homepage": "https://github.com/maxogden/extract-zip",
   "dependencies": {
     "concat-stream": "1.6.0",
     "debug": "2.2.0",
