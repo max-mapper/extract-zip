@@ -6,6 +6,7 @@ Uses the [`yauzl`](http://npmjs.org/yauzl) ZIP parser.
 
 [![NPM](https://nodei.co/npm/extract-zip.png?global=true)](https://nodei.co/npm/extract-zip/)
 [![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
+[![Build Status](https://travis-ci.org/maxogden/extract-zip.svg?branch=master)](https://travis-ci.org/maxogden/extract-zip)
 
 ## Installation
 
