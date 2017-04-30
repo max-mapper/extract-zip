@@ -8,8 +8,9 @@ var test = require('tape')
 
 var catsZip = path.join(__dirname, 'cats.zip')
 var githubZip = path.join(__dirname, 'github.zip')
-var symlinkZip = path.join(__dirname, 'symlink.zip')
+var subdirZip = path.join(__dirname, 'file-in-subdir-without-subdir-entry.zip')
 var symlinkDestZip = path.join(__dirname, 'symlink-dest.zip')
+var symlinkZip = path.join(__dirname, 'symlink.zip')
 
 var relativeTarget = './cats'
 
@@ -179,6 +180,16 @@ test('no file created out of bound', function (t) {
       fs.exists(path.join(dirPath, 'file.txt'), function (exists) {
         t.false(exists, 'file not created in symlink target')
       })
+    })
+  })
+})
+
+test('files in subdirs where the subdir does not have its own entry is extracted', function (t) {
+  t.plan(1)
+
+  tempExtract('subdir-file', subdirZip, function (dirPath) {
+    fs.exists(path.join(dirPath, 'foo', 'bar'), function (exists) {
+      t.ok(exists, 'file created')
     })
   })
 })
