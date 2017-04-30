@@ -156,7 +156,9 @@ test('symlink destination disallowed', function (t) {
 
   extract(sourceE, {dir: targetE}, function (err) {
     t.true(err instanceof Error, 'is native V8 error')
-    t.same(err.message, 'Out of bound path "' + canonicalTmp + '" found while processing file symlink-dest/aaa/file.txt', 'has descriptive error message')
+    if (err) {
+      t.same(err.message, 'Out of bound path "' + canonicalTmp + '" found while processing file symlink-dest/aaa/file.txt', 'has descriptive error message')
+    }
   })
 })
 
