@@ -5,6 +5,10 @@
   "bin": {
     "extract-zip": "cli.js"
   },
+  "files": [
+    "index.js",
+    "cli.js"
+  ],
   "scripts": {
     "test": "standard && node test/test.js"
   },
