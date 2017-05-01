@@ -14,17 +14,17 @@ var symlinkZip = path.join(__dirname, 'symlink.zip')
 
 var relativeTarget = './cats'
 
-function mkdtemp (suffix, callback) {
+function mkdtemp (t, suffix, callback) {
   temp.mkdir({prefix: 'extract-zip', suffix: suffix}, function (err, dirPath) {
-    if (err) throw err
+    t.notOk(err, 'no error when creating temporary directory')
     callback(dirPath)
   })
 }
 
-function tempExtract (suffix, zipPath, callback) {
-  mkdtemp(suffix, function (dirPath) {
+function tempExtract (t, suffix, zipPath, callback) {
+  mkdtemp(t, suffix, function (dirPath) {
     extract(zipPath, {dir: dirPath}, function (err) {
-      if (err) throw err
+      t.notOk(err, 'no error when extracting ' + zipPath)
 
       callback(dirPath)
     })
@@ -38,9 +38,9 @@ function relativeExtract (callback) {
 }
 
 test('files', function (t) {
-  t.plan(1)
+  t.plan(3)
 
-  tempExtract('files', catsZip, function (dirPath) {
+  tempExtract(t, 'files', catsZip, function (dirPath) {
     fs.exists(path.join(dirPath, 'cats', 'gJqEYBs.jpg'), function (exists) {
       t.ok(exists, 'file created')
     })
@@ -48,9 +48,9 @@ test('files', function (t) {
 })
 
 test('symlinks', function (t) {
-  t.plan(3)
+  t.plan(5)
 
-  tempExtract('symlinks', catsZip, function (dirPath) {
+  tempExtract(t, 'symlinks', catsZip, function (dirPath) {
     var symlink = path.join(dirPath, 'cats', 'orange_symlink')
 
     fs.exists(symlink, function (exists) {
@@ -65,9 +65,9 @@ test('symlinks', function (t) {
 })
 
 test('directories', function (t) {
-  t.plan(6)
+  t.plan(8)
 
-  tempExtract('directories', catsZip, function (dirPath) {
+  tempExtract(t, 'directories', catsZip, function (dirPath) {
     var dirWithContent = path.join(dirPath, 'cats', 'orange')
     var dirWithoutContent = path.join(dirPath, 'cats', 'empty')
 
@@ -92,9 +92,9 @@ test('directories', function (t) {
 })
 
 test('verify github zip extraction worked', function (t) {
-  t.plan(1)
+  t.plan(3)
 
-  tempExtract('verify-extraction', githubZip, function (dirPath) {
+  tempExtract(t, 'verify-extraction', githubZip, function (dirPath) {
     fs.exists(path.join(dirPath, 'extract-zip-master', 'test'), function (exists) {
       t.ok(exists, 'folder created')
     })
@@ -102,9 +102,9 @@ test('verify github zip extraction worked', function (t) {
 })
 
 test('callback called once', function (t) {
-  t.plan(2)
+  t.plan(4)
 
-  tempExtract('callback', symlinkZip, function (dirPath) {
+  tempExtract(t, 'callback', symlinkZip, function (dirPath) {
     // this triggers an error due to symlink creation
     extract(symlinkZip, {dir: dirPath}, function (err) {
       if (err) t.ok(true, 'error passed')
@@ -128,14 +128,14 @@ test('no folder created', function (t) {
 
   relativeExtract(function (err) {
     t.true(err instanceof Error, 'is native V8 error')
-    t.false(fs.existsSync(path.join(__dirname, relativeTarget), 'file not created'))
+    t.false(fs.existsSync(path.join(__dirname, relativeTarget)), 'file not created')
   })
 })
 
 test('symlink destination disallowed', function (t) {
-  t.plan(3)
+  t.plan(4)
 
-  mkdtemp('symlink-destination-disallowed', function (dirPath) {
+  mkdtemp(t, 'symlink-destination-disallowed', function (dirPath) {
     fs.exists(path.join(dirPath, 'file.txt'), function (exists) {
       t.false(exists, 'file doesn\'t exist at symlink target')
 
@@ -153,9 +153,9 @@ test('symlink destination disallowed', function (t) {
 })
 
 test('no file created out of bound', function (t) {
-  t.plan(6)
+  t.plan(7)
 
-  mkdtemp('out-of-bounds-file', function (dirPath) {
+  mkdtemp(t, 'out-of-bounds-file', function (dirPath) {
     extract(symlinkDestZip, {dir: dirPath}, function (err) {
       var symlinkDestDir = path.join(dirPath, 'symlink-dest')
 
@@ -185,9 +185,9 @@ test('no file created out of bound', function (t) {
 })
 
 test('files in subdirs where the subdir does not have its own entry is extracted', function (t) {
-  t.plan(1)
+  t.plan(3)
 
-  tempExtract('subdir-file', subdirZip, function (dirPath) {
+  tempExtract(t, 'subdir-file', subdirZip, function (dirPath) {
     fs.exists(path.join(dirPath, 'foo', 'bar'), function (exists) {
       t.ok(exists, 'file created')
     })
