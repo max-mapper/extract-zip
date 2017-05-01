@@ -57,30 +57,38 @@ module.exports = function (zipPath, opts, cb) {
 
         var destDir = path.dirname(path.join(opts.dir, entry.fileName))
 
-        fs.realpath(destDir, function (err, canonicalDestDir) {
+        mkdirp(destDir, function (err) {
           if (err) {
             cancelled = true
             zipfile.close()
             return cb(err)
           }
 
-          var relativeDestDir = path.relative(opts.dir, canonicalDestDir)
-
-          if (relativeDestDir.split(path.sep).indexOf('..') !== -1) {
-            cancelled = true
-            zipfile.close()
-            return cb(new Error('Out of bound path "' + canonicalDestDir + '" found while processing file ' + entry.fileName))
-          }
-
-          extractEntry(entry, function (err) {
-            // if any extraction fails then abort everything
+          fs.realpath(destDir, function (err, canonicalDestDir) {
             if (err) {
               cancelled = true
               zipfile.close()
               return cb(err)
             }
-            debug('finished processing', entry.fileName)
-            zipfile.readEntry()
+
+            var relativeDestDir = path.relative(opts.dir, canonicalDestDir)
+
+            if (relativeDestDir.split(path.sep).indexOf('..') !== -1) {
+              cancelled = true
+              zipfile.close()
+              return cb(new Error('Out of bound path "' + canonicalDestDir + '" found while processing file ' + entry.fileName))
+            }
+
+            extractEntry(entry, function (err) {
+              // if any extraction fails then abort everything
+              if (err) {
+                cancelled = true
+                zipfile.close()
+                return cb(err)
+              }
+              debug('finished processing', entry.fileName)
+              zipfile.readEntry()
+            })
           })
         })
       })
