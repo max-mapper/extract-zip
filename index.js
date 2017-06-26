@@ -4,6 +4,7 @@ var yauzl = require('yauzl')
 var mkdirp = require('mkdirp')
 var concat = require('concat-stream')
 var debug = require('debug')('extract-zip')
+var pump = require('pump')
 
 module.exports = function (zipPath, opts, cb) {
   debug('creating target directory', opts.dir)
@@ -164,38 +165,35 @@ module.exports = function (zipPath, opts, cb) {
               return done(err)
             }
 
-            readStream.on('error', function (err) {
-              console.log('read err', err)
-            })
-
-            if (symlink) writeSymlink()
-            else writeStream()
-
-            function writeStream () {
-              var writeStream = fs.createWriteStream(dest, {mode: procMode})
-              readStream.pipe(writeStream)
-
-              writeStream.on('finish', function () {
-                done()
-              })
-
-              writeStream.on('error', function (err) {
-                debug('write error', {error: err})
-                cancelled = true
-                return done(err)
-              })
-            }
-
-            // AFAICT the content of the symlink file itself is the symlink target filename string
-            function writeSymlink () {
-              readStream.pipe(concat(function (data) {
+            if (symlink) {
+              var onSymlink = function (data) {
                 var link = data.toString()
                 debug('creating symlink', link, dest)
                 fs.symlink(link, dest, function (err) {
                   if (err) cancelled = true
                   done(err)
                 })
-              }))
+              }
+
+              // AFAICT the content of the symlink file itself is the symlink target filename string
+              pump(readStream, concat(onSymlink), function (err) {
+                if (err) {
+                  debug('read error', {error: err})
+                  cancelled = true
+                  done(err)
+                }
+              })
+            } else {
+              var writeStream = fs.createWriteStream(dest, {mode: procMode})
+
+              pump(readStream, writeStream, function (err) {
+                if (err) {
+                  debug('write error', {error: err})
+                  cancelled = true
+                }
+
+                done(err)
+              })
             }
           })
         })
