@@ -11,6 +11,7 @@ var githubZip = path.join(__dirname, 'github.zip')
 var subdirZip = path.join(__dirname, 'file-in-subdir-without-subdir-entry.zip')
 var symlinkDestZip = path.join(__dirname, 'symlink-dest.zip')
 var symlinkZip = path.join(__dirname, 'symlink.zip')
+var entryErrorZip = path.join(__dirname, 'entry-error.zip')
 
 var relativeTarget = './cats'
 
@@ -190,6 +191,29 @@ test('files in subdirs where the subdir does not have its own entry is extracted
   tempExtract(t, 'subdir-file', subdirZip, function (dirPath) {
     fs.exists(path.join(dirPath, 'foo', 'bar'), function (exists) {
       t.ok(exists, 'file created')
+    })
+  })
+})
+
+test('zipfile entry error is caught and optional onEntryError callback is called', function (t) {
+  t.plan(6)
+
+  mkdtemp(t, 'entry-error', function (dirPath) {
+    function onEntryError (err, zipfile) {
+      t.true(err instanceof Error, 'error is passed to onEntryError callback')
+      t.ok(zipfile, 'zipfile is passed to onEntryError callback')
+    }
+
+    extract(entryErrorZip, {dir: dirPath, onEntryError: onEntryError}, function (err) {
+      t.notOk(err, 'no error when extracting ' + entryErrorZip)
+
+      fs.exists(path.join(dirPath, 'valid.txt'), function (exists) {
+        t.true(exists, 'valid file created')
+      })
+
+      fs.exists(path.join(dirPath, 'test/error.txt'), function (exists) {
+        t.false(exists, 'error file not created')
+      })
     })
   })
 })
