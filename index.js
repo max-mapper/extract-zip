@@ -41,6 +41,13 @@ module.exports = function (zipPath, opts, cb) {
         }
       })
 
+      zipfile.on('error', function (err) {
+        debug('zipfile error', {error: err})
+        if (opts.onEntryError) {
+          opts.onEntryError(err, zipfile)
+        }
+      })
+
       zipfile.on('entry', function (entry) {
         if (cancelled) {
           debug('skipping entry', entry.fileName, {cancelled: cancelled})
