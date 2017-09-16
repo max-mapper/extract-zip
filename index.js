@@ -4,11 +4,12 @@ var yauzl = require('yauzl')
 var mkdirp = require('mkdirp')
 var concat = require('concat-stream')
 var debug = require('debug')('extract-zip')
+var isAbsolute = require('path-is-absolute')
 
 module.exports = function (zipPath, opts, cb) {
   debug('creating target directory', opts.dir)
 
-  if (path.isAbsolute(opts.dir) === false) {
+  if (isAbsolute(opts.dir) === false) {
     return cb(new Error('Target directory is expected to be absolute'))
   }
 
