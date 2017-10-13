@@ -19,7 +19,7 @@
   ],
   "dependencies": {
     "concat-stream": "1.6.0",
-    "debug": "3.0.1",
+    "debug": "3.1.0",
     "mkdirp": "0.5.0",
     "yauzl": "2.4.1"
   },
