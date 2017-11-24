@@ -41,6 +41,12 @@ module.exports = function (zipPath, opts, cb) {
         }
       })
 
+      zipfile.on('error', function (err) {
+        cancelled = true
+        zipfile.close()
+        cb(err)
+      })
+
       zipfile.on('entry', function (entry) {
         if (cancelled) {
           debug('skipping entry', entry.fileName, {cancelled: cancelled})
@@ -203,3 +209,4 @@ module.exports = function (zipPath, opts, cb) {
     })
   }
 }
+
