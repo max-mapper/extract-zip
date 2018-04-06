@@ -204,7 +204,8 @@ test('onEntry gets called for each entry', function (t) {
     }
   }
   mkdtemp(t, 'files', function (dirPath) {
-    extract(catsZip, Object.assign({dir: dirPath}, options), function (err) {
+    options.dir = dirPath
+    extract(catsZip, options, function (err) {
       t.notOk(err, 'no error when extracting ' + catsZip)
       t.same(onEntryCallCount, 11, 'onEntry was called for each entry')
     })
@@ -222,7 +223,8 @@ test('onEntry can stop extraction', function (t) {
     }
   }
   mkdtemp(t, 'files', function (dirPath) {
-    extract(catsZip, Object.assign({dir: dirPath}, options), function (err) {
+    options.dir = dirPath
+    extract(catsZip, options, function (err) {
       t.same(onEntryCallCount, 1, 'onEntry stopped extraction straight away')
       t.ok(err, 'onEntry can stop extraction test')
     })
@@ -240,7 +242,8 @@ test('onEntry allows extraction', function (t) {
     }
   }
   mkdtemp(t, 'files', function (dirPath) {
-    extract(catsZip, Object.assign({dir: dirPath}, options), function (err) {
+    options.dir = dirPath
+    extract(catsZip, options, function (err) {
       t.notOk(err, 'no error when extracting' + catsZip)
       t.same(onEntryCallCount, 11, 'onEntry allowed extraction')
     })
