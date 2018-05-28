@@ -99,10 +99,29 @@ module.exports = function (zipPath, opts, cb) {
           return setImmediate(done)
         }
 
-        if (opts.onEntry) {
-          opts.onEntry(entry, zipfile)
+        var callback = function (err) {
+          if (err) {
+            return done(err)
+          }
+          doExtractEntry(entry, done)
         }
+        if (opts.onEntry) {
+          if (opts.onEntry.length === 3) {
+            // Allow the callers onEntry to call methods with callbacks and
+            // those callbacks can drive failure/doExtractEntry.
+            opts.onEntry(entry, zipfile, callback)
+          } else {
+            // Backwards compatability
+            opts.onEntry(entry, zipfile)
+            doExtractEntry(entry, done)
+          }
+        } else {
+          // opts does not contain onEntry, so
+          doExtractEntry(entry, done)
+        }
+      }
 
+      function doExtractEntry (entry, done) {
         var dest = path.join(opts.dir, entry.fileName)
 
         // convert external file attr int into a fs stat mode int

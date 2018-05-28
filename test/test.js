@@ -193,3 +193,59 @@ test('files in subdirs where the subdir does not have its own entry is extracted
     })
   })
 })
+
+test('onEntry gets called for each entry', function (t) {
+  t.plan(3)
+
+  var onEntryCallCount = 0
+  var options = {
+    onEntry: function (entry, zipfile) {
+      onEntryCallCount++
+    }
+  }
+  mkdtemp(t, 'files', function (dirPath) {
+    options.dir = dirPath
+    extract(catsZip, options, function (err) {
+      t.notOk(err, 'no error when extracting ' + catsZip)
+      t.same(onEntryCallCount, 11, 'onEntry was called for each entry')
+    })
+  })
+})
+
+test('onEntry can stop extraction', function (t) {
+  t.plan(3)
+
+  var onEntryCallCount = 0
+  var options = {
+    onEntry: function (entry, zipfile, done) {
+      onEntryCallCount++
+      done('onEntry can stop extraction test')
+    }
+  }
+  mkdtemp(t, 'files', function (dirPath) {
+    options.dir = dirPath
+    extract(catsZip, options, function (err) {
+      t.same(onEntryCallCount, 1, 'onEntry stopped extraction straight away')
+      t.ok(err, 'onEntry can stop extraction test')
+    })
+  })
+})
+
+test('onEntry allows extraction', function (t) {
+  t.plan(3)
+
+  var onEntryCallCount = 0
+  var options = {
+    onEntry: function (entry, zipfile, done) {
+      onEntryCallCount++
+      done()
+    }
+  }
+  mkdtemp(t, 'files', function (dirPath) {
+    options.dir = dirPath
+    extract(catsZip, options, function (err) {
+      t.notOk(err, 'no error when extracting' + catsZip)
+      t.same(onEntryCallCount, 11, 'onEntry allowed extraction')
+    })
+  })
+})
