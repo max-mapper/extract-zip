@@ -19,13 +19,13 @@
   ],
   "dependencies": {
     "concat-stream": "1.6.2",
-    "debug": "2.6.9",
+    "debug": "3.1.0",
     "mkdirp": "0.5.1",
-    "yauzl": "2.4.1"
+    "yauzl": "2.10.0"
   },
   "devDependencies": {
     "rimraf": "^2.2.8",
-    "standard": "^5.2.2",
+    "standard": "^11.0.1",
     "tape": "^4.2.0",
     "temp": "^0.8.3"
   },
