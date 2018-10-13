@@ -34,6 +34,13 @@ module.exports = function (zipPath, opts, cb) {
 
       zipfile.readEntry()
 
+      zipfile.on('error', function (err) {
+        if (!cancelled) {
+          debug('zip extraction failed')
+          cb(err)
+        }
+      })
+
       zipfile.on('close', function () {
         if (!cancelled) {
           debug('zip extraction complete')
@@ -135,7 +142,7 @@ module.exports = function (zipPath, opts, cb) {
           }
         }
 
-        debug('extracting entry', { filename: entry.fileName, isDir: isDir, isSymlink: symlink })
+        debug('extracting entry', {filename: entry.fileName, isDir: isDir, isSymlink: symlink})
 
         // reverse umask first (~)
         var umask = ~process.umask()
