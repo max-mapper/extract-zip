@@ -35,10 +35,9 @@ module.exports = function (zipPath, opts, cb) {
       zipfile.readEntry()
 
       zipfile.on('error', function (err) {
-        if (!cancelled) {
-          debug('zip extraction failed')
-          cb(err)
-        }
+        cancelled = true
+        zipfile.close()
+        cb(err)
       })
 
       zipfile.on('close', function () {
