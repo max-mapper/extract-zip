@@ -37,13 +37,21 @@ function relativeExtract (callback) {
   rimraf.sync(relativeTarget)
 }
 
+function exists (t, pathToCheck, message) {
+  const exists = fs.existsSync(pathToCheck)
+  t.true(exists, message)
+}
+
+function doesntExist (t, pathToCheck, message) {
+  const exists = fs.existsSync(pathToCheck)
+  t.false(exists, message)
+}
+
 test('files', function (t) {
   t.plan(3)
 
   tempExtract(t, 'files', catsZip, function (dirPath) {
-    fs.exists(path.join(dirPath, 'cats', 'gJqEYBs.jpg'), function (exists) {
-      t.ok(exists, 'file created')
-    })
+    exists(t, path.join(dirPath, 'cats', 'gJqEYBs.jpg'), 'file created')
   })
 })
 
@@ -53,9 +61,7 @@ test('symlinks', function (t) {
   tempExtract(t, 'symlinks', catsZip, function (dirPath) {
     var symlink = path.join(dirPath, 'cats', 'orange_symlink')
 
-    fs.exists(symlink, function (exists) {
-      t.ok(exists, 'symlink created')
-    })
+    exists(t, symlink, 'symlink created')
 
     fs.lstat(symlink, function (err, stats) {
       t.same(err, null, 'symlink can be stat\'d')
@@ -71,18 +77,14 @@ test('directories', function (t) {
     var dirWithContent = path.join(dirPath, 'cats', 'orange')
     var dirWithoutContent = path.join(dirPath, 'cats', 'empty')
 
-    fs.exists(dirWithContent, function (exists) {
-      t.ok(exists, 'directory created')
-    })
+    exists(t, dirWithContent, 'directory created')
 
     fs.readdir(dirWithContent, function (err, files) {
       t.same(err, null, 'directory can be read')
       t.ok(files.length > 0, 'directory has files')
     })
 
-    fs.exists(dirWithoutContent, function (exists) {
-      t.ok(exists, 'empty directory created')
-    })
+    exists(t, dirWithoutContent, 'empty directory created')
 
     fs.readdir(dirWithoutContent, function (err, files) {
       t.same(err, null, 'empty directory can be read')
@@ -95,9 +97,7 @@ test('verify github zip extraction worked', function (t) {
   t.plan(3)
 
   tempExtract(t, 'verify-extraction', githubZip, function (dirPath) {
-    fs.exists(path.join(dirPath, 'extract-zip-master', 'test'), function (exists) {
-      t.ok(exists, 'folder created')
-    })
+    exists(t, path.join(dirPath, 'extract-zip-master', 'test'), 'folder created')
   })
 })
 
@@ -128,7 +128,7 @@ test('no folder created', function (t) {
 
   relativeExtract(function (err) {
     t.true(err instanceof Error, 'is native V8 error')
-    t.false(fs.existsSync(path.join(__dirname, relativeTarget)), 'file not created')
+    doesntExist(t, path.join(__dirname, relativeTarget), 'file not created')
   })
 })
 
@@ -137,16 +137,14 @@ if (process.platform !== 'win32') {
     t.plan(4)
 
     mkdtemp(t, 'symlink-destination-disallowed', function (dirPath) {
-      fs.exists(path.join(dirPath, 'file.txt'), function (exists) {
-        t.false(exists, 'file doesn\'t exist at symlink target')
+      doesntExist(t, path.join(dirPath, 'file.txt'), "file doesn't exist at symlink target")
 
-        extract(symlinkDestZip, { dir: dirPath }, function (err) {
-          t.true(err instanceof Error, 'is native V8 error')
+      extract(symlinkDestZip, { dir: dirPath }, function (err) {
+        t.true(err instanceof Error, 'is native V8 error')
 
-          if (err) {
-            t.match(err.message, /Out of bound path ".*?" found while processing file symlink-dest\/aaa\/file.txt/, 'has descriptive error message')
-          }
-        })
+        if (err) {
+          t.match(err.message, /Out of bound path ".*?" found while processing file symlink-dest\/aaa\/file.txt/, 'has descriptive error message')
+        }
       })
     })
   })
@@ -161,25 +159,11 @@ test('no file created out of bound', function (t) {
 
       t.true(err instanceof Error, 'is native V8 error')
 
-      fs.exists(symlinkDestDir, function (exists) {
-        t.true(exists, 'target folder created')
-      })
-
-      fs.exists(path.join(symlinkDestDir, 'aaa'), function (exists) {
-        t.true(exists, 'symlink created')
-      })
-
-      fs.exists(path.join(symlinkDestDir, 'ccc'), function (exists) {
-        t.true(exists, 'parent folder created')
-      })
-
-      fs.exists(path.join(symlinkDestDir, 'ccc/file.txt'), function (exists) {
-        t.false(exists, 'file not created in original folder')
-      })
-
-      fs.exists(path.join(dirPath, 'file.txt'), function (exists) {
-        t.false(exists, 'file not created in symlink target')
-      })
+      exists(t, symlinkDestDir, 'target folder created')
+      exists(t, path.join(symlinkDestDir, 'aaa'), 'symlink created')
+      exists(t, path.join(symlinkDestDir, 'ccc'), 'parent folder created')
+      doesntExist(t, path.join(symlinkDestDir, 'ccc/file.txt'), 'file not created in original folder')
+      doesntExist(t, path.join(dirPath, 'file.txt'), 'file not created in symlink target')
     })
   })
 })
@@ -188,9 +172,7 @@ test('files in subdirs where the subdir does not have its own entry is extracted
   t.plan(3)
 
   tempExtract(t, 'subdir-file', subdirZip, function (dirPath) {
-    fs.exists(path.join(dirPath, 'foo', 'bar'), function (exists) {
-      t.ok(exists, 'file created')
-    })
+    exists(t, path.join(dirPath, 'foo', 'bar'), 'file created')
   })
 })
 
