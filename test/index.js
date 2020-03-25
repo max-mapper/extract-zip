@@ -51,6 +51,7 @@ test('symlinks', async t => {
   const dirPath = await tempExtract(t, 'symlinks', catsZip)
   const symlink = path.join(dirPath, 'cats', 'orange_symlink')
 
+  exists(t, path.join(dirPath, 'cats'), 'directory created')
   exists(t, symlink, 'symlink created')
 
   const stats = await fs.lstat(symlink)
