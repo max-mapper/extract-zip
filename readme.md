@@ -10,6 +10,8 @@ Uses the [`yauzl`](http://npmjs.org/yauzl) ZIP parser.
 
 ## Installation
 
+Make sure you have Node 10 or greater installed.
+
 Get the library:
 
 ```
