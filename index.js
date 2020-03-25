@@ -55,8 +55,7 @@ module.exports = function (zipPath, opts, cb) {
 
         debug('zipfile entry', entry.fileName)
 
-        if (/^__MACOSX\//.test(entry.fileName)) {
-          // dir name starts with __MACOSX/
+        if (entry.fileName.startsWith('__MACOSX/')) {
           zipfile.readEntry()
           return
         }
