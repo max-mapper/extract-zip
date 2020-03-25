@@ -30,8 +30,7 @@
   "devDependencies": {
     "rimraf": "^2.2.8",
     "standard": "^5.2.2",
-    "tape": "^4.2.0",
-    "temp": "^0.8.3"
+    "tape": "^4.2.0"
   },
   "directories": {
     "test": "test"

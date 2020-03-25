@@ -3,7 +3,6 @@ var fs = require('fs')
 var os = require('os')
 var path = require('path')
 var rimraf = require('rimraf')
-var temp = require('temp').track()
 var test = require('tape')
 
 var catsZip = path.join(__dirname, 'cats.zip')
@@ -16,7 +15,7 @@ var brokenZip = path.join(__dirname, 'broken.zip')
 var relativeTarget = './cats'
 
 function mkdtemp (t, suffix, callback) {
-  temp.mkdir({prefix: 'extract-zip', suffix: suffix}, function (err, dirPath) {
+  fs.mkdtemp(path.join(os.tmpdir(), `extract-zip-${suffix}`), function (err, dirPath) {
     t.notOk(err, 'no error when creating temporary directory')
     callback(dirPath)
   })
