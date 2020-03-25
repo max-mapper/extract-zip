@@ -1,9 +1,7 @@
 const extract = require('../')
-const { existsSync, promises: fs } = require('fs')
+const fs = require('fs-extra')
 const os = require('os')
 const path = require('path')
-const { promisify } = require('util')
-const rimraf = promisify(require('rimraf'))
 const test = require('ava')
 
 const catsZip = path.join(__dirname, 'cats.zip')
@@ -26,13 +24,13 @@ async function tempExtract (t, suffix, zipPath) {
   return dirPath
 }
 
-function exists (t, pathToCheck, message) {
-  const exists = existsSync(pathToCheck)
+async function pathExists (t, pathToCheck, message) {
+  const exists = await fs.pathExists(pathToCheck)
   t.true(exists, message)
 }
 
-function doesntExist (t, pathToCheck, message) {
-  const exists = existsSync(pathToCheck)
+async function pathDoesntExist (t, pathToCheck, message) {
+  const exists = await fs.pathExists(pathToCheck)
   t.false(exists, message)
 }
 
@@ -44,15 +42,15 @@ async function assertPermissions (t, pathToCheck, expectedMode) {
 
 test('files', async t => {
   const dirPath = await tempExtract(t, 'files', catsZip)
-  exists(t, path.join(dirPath, 'cats', 'gJqEYBs.jpg'), 'file created')
+  await pathExists(t, path.join(dirPath, 'cats', 'gJqEYBs.jpg'), 'file created')
 })
 
 test('symlinks', async t => {
   const dirPath = await tempExtract(t, 'symlinks', catsZip)
   const symlink = path.join(dirPath, 'cats', 'orange_symlink')
 
-  exists(t, path.join(dirPath, 'cats'), 'directory created')
-  exists(t, symlink, 'symlink created')
+  await pathExists(t, path.join(dirPath, 'cats'), 'directory created')
+  await pathExists(t, symlink, `symlink created: ${symlink}`)
 
   const stats = await fs.lstat(symlink)
   t.truthy(stats.isSymbolicLink(), 'symlink is valid')
@@ -65,12 +63,12 @@ test('directories', async t => {
   const dirWithContent = path.join(dirPath, 'cats', 'orange')
   const dirWithoutContent = path.join(dirPath, 'cats', 'empty')
 
-  exists(t, dirWithContent, 'directory created')
+  await pathExists(t, dirWithContent, 'directory created')
 
   const filesWithContent = await fs.readdir(dirWithContent)
   t.not(filesWithContent.length, 0, 'directory has files')
 
-  exists(t, dirWithoutContent, 'empty directory created')
+  await pathExists(t, dirWithoutContent, 'empty directory created')
 
   const filesWithoutContent = await fs.readdir(dirWithoutContent)
   t.is(filesWithoutContent.length, 0, 'empty directory has no files')
@@ -78,7 +76,7 @@ test('directories', async t => {
 
 test('verify github zip extraction worked', async t => {
   const dirPath = await tempExtract(t, 'verify-extraction', githubZip)
-  exists(t, path.join(dirPath, 'extract-zip-master', 'test'), 'folder created')
+  await pathExists(t, path.join(dirPath, 'extract-zip-master', 'test'), 'folder created')
   if (process.platform !== 'win32') {
     await assertPermissions(t, path.join(dirPath, 'extract-zip-master', 'test'), 0o755)
   }
@@ -100,18 +98,18 @@ test('opts.onEntry', async t => {
 })
 
 test('relative target directory', async t => {
-  await rimraf(relativeTarget)
+  await fs.remove(relativeTarget)
   await t.throwsAsync(extract(catsZip, { dir: relativeTarget }), {
     message: 'Target directory is expected to be absolute'
   })
-  doesntExist(t, path.join(__dirname, relativeTarget), 'folder not created')
-  await rimraf(relativeTarget)
+  await pathDoesntExist(t, path.join(__dirname, relativeTarget), 'folder not created')
+  await fs.remove(relativeTarget)
 })
 
 if (process.platform !== 'win32') {
   test('symlink destination disallowed', async t => {
     const dirPath = await mkdtemp(t, 'symlink-destination-disallowed')
-    doesntExist(t, path.join(dirPath, 'file.txt'), "file doesn't exist at symlink target")
+    await pathDoesntExist(t, path.join(dirPath, 'file.txt'), "file doesn't exist at symlink target")
 
     await t.throwsAsync(extract(symlinkDestZip, { dir: dirPath }), {
       message: /Out of bound path ".*?" found while processing file symlink-dest\/aaa\/file.txt/
@@ -124,11 +122,11 @@ if (process.platform !== 'win32') {
 
     const symlinkDestDir = path.join(dirPath, 'symlink-dest')
 
-    exists(t, symlinkDestDir, 'target folder created')
-    exists(t, path.join(symlinkDestDir, 'aaa'), 'symlink created')
-    exists(t, path.join(symlinkDestDir, 'ccc'), 'parent folder created')
-    doesntExist(t, path.join(symlinkDestDir, 'ccc/file.txt'), 'file not created in original folder')
-    doesntExist(t, path.join(dirPath, 'file.txt'), 'file not created in symlink target')
+    await pathExists(t, symlinkDestDir, 'target folder created')
+    await pathExists(t, path.join(symlinkDestDir, 'aaa'), 'symlink created')
+    await pathExists(t, path.join(symlinkDestDir, 'ccc'), 'parent folder created')
+    await pathDoesntExist(t, path.join(symlinkDestDir, 'ccc/file.txt'), 'file not created in original folder')
+    await pathDoesntExist(t, path.join(dirPath, 'file.txt'), 'file not created in symlink target')
   })
 
   test('defaultDirMode', async t => {
@@ -154,7 +152,7 @@ if (process.platform !== 'win32') {
 
 test('files in subdirs where the subdir does not have its own entry is extracted', async t => {
   const dirPath = await tempExtract(t, 'subdir-file', subdirZip)
-  exists(t, path.join(dirPath, 'foo', 'bar'), 'file created')
+  await pathExists(t, path.join(dirPath, 'foo', 'bar'), 'file created')
 })
 
 test('extract broken zip', async t => {
