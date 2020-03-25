@@ -1,8 +1,8 @@
-var fs = require('fs')
-var path = require('path')
-var yauzl = require('yauzl')
-var concat = require('concat-stream')
-var debug = require('debug')('extract-zip')
+const fs = require('fs')
+const path = require('path')
+const yauzl = require('yauzl')
+const concat = require('concat-stream')
+const debug = require('debug')('extract-zip')
 
 module.exports = function (zipPath, opts, cb) {
   debug('creating target directory', opts.dir)
@@ -29,7 +29,7 @@ module.exports = function (zipPath, opts, cb) {
     yauzl.open(zipPath, { lazyEntries: true }, function (err, zipfile) {
       if (err) return cb(err)
 
-      var cancelled = false
+      let cancelled = false
 
       zipfile.on('error', function (err) {
         if (err) {
@@ -61,7 +61,7 @@ module.exports = function (zipPath, opts, cb) {
           return
         }
 
-        var destDir = path.dirname(path.join(opts.dir, entry.fileName))
+        const destDir = path.dirname(path.join(opts.dir, entry.fileName))
 
         fs.mkdir(destDir, { recursive: true }, function (err) {
           /* istanbul ignore if */
@@ -79,7 +79,7 @@ module.exports = function (zipPath, opts, cb) {
               return cb(err)
             }
 
-            var relativeDestDir = path.relative(opts.dir, canonicalDestDir)
+            const relativeDestDir = path.relative(opts.dir, canonicalDestDir)
 
             if (relativeDestDir.split(path.sep).indexOf('..') !== -1) {
               cancelled = true
@@ -112,16 +112,16 @@ module.exports = function (zipPath, opts, cb) {
           opts.onEntry(entry, zipfile)
         }
 
-        var dest = path.join(opts.dir, entry.fileName)
+        const dest = path.join(opts.dir, entry.fileName)
 
         // convert external file attr int into a fs stat mode int
-        var mode = (entry.externalFileAttributes >> 16) & 0xFFFF
+        let mode = (entry.externalFileAttributes >> 16) & 0xFFFF
         // check if it's a symlink or dir (using stat mode constants)
-        var IFMT = 61440
-        var IFDIR = 16384
-        var IFLNK = 40960
-        var symlink = (mode & IFMT) === IFLNK
-        var isDir = (mode & IFMT) === IFDIR
+        const IFMT = 61440
+        const IFDIR = 16384
+        const IFLNK = 40960
+        const symlink = (mode & IFMT) === IFLNK
+        let isDir = (mode & IFMT) === IFDIR
 
         // Failsafe, borrowed from jsZip
         if (!isDir && entry.fileName.slice(-1) === '/') {
@@ -130,7 +130,7 @@ module.exports = function (zipPath, opts, cb) {
 
         // check for windows weird way of specifying a directory
         // https://github.com/maxogden/extract-zip/issues/13#issuecomment-154494566
-        var madeBy = entry.versionMadeBy >> 8
+        const madeBy = entry.versionMadeBy >> 8
         if (!isDir) isDir = (madeBy === 0 && entry.externalFileAttributes === 16)
 
         // if no mode then default to default modes
@@ -147,13 +147,12 @@ module.exports = function (zipPath, opts, cb) {
         debug('extracting entry', { filename: entry.fileName, isDir: isDir, isSymlink: symlink })
 
         // reverse umask first (~)
-        var umask = ~process.umask()
+        const umask = ~process.umask()
         // & with processes umask to override invalid perms
-        var procMode = mode & umask
+        const procMode = mode & umask
 
         // always ensure folders are created
-        var destDir = dest
-        if (!isDir) destDir = path.dirname(dest)
+        const destDir = isDir ? dest : path.dirname(dest)
 
         debug('mkdirp', { dir: destDir })
         fs.mkdir(destDir, { recursive: true }, function (err) {
@@ -184,7 +183,7 @@ module.exports = function (zipPath, opts, cb) {
             else writeStream()
 
             function writeStream () {
-              var writeStream = fs.createWriteStream(dest, { mode: procMode })
+              const writeStream = fs.createWriteStream(dest, { mode: procMode })
               readStream.pipe(writeStream)
 
               writeStream.on('finish', function () {
@@ -201,7 +200,7 @@ module.exports = function (zipPath, opts, cb) {
             // AFAICT the content of the symlink file itself is the symlink target filename string
             function writeSymlink () {
               readStream.pipe(concat(function (data) {
-                var link = data.toString()
+                const link = data.toString()
                 debug('creating symlink', link, dest)
                 fs.symlink(link, dest, function (err) {
                   if (err) cancelled = true

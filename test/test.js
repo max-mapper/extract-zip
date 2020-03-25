@@ -1,18 +1,18 @@
-var extract = require('../')
-var fs = require('fs')
-var os = require('os')
-var path = require('path')
-var rimraf = require('rimraf')
-var test = require('tape')
+const extract = require('../')
+const fs = require('fs')
+const os = require('os')
+const path = require('path')
+const rimraf = require('rimraf')
+const test = require('tape')
 
-var catsZip = path.join(__dirname, 'cats.zip')
-var githubZip = path.join(__dirname, 'github.zip')
-var subdirZip = path.join(__dirname, 'file-in-subdir-without-subdir-entry.zip')
-var symlinkDestZip = path.join(__dirname, 'symlink-dest.zip')
-var symlinkZip = path.join(__dirname, 'symlink.zip')
-var brokenZip = path.join(__dirname, 'broken.zip')
+const catsZip = path.join(__dirname, 'cats.zip')
+const githubZip = path.join(__dirname, 'github.zip')
+const subdirZip = path.join(__dirname, 'file-in-subdir-without-subdir-entry.zip')
+const symlinkDestZip = path.join(__dirname, 'symlink-dest.zip')
+const symlinkZip = path.join(__dirname, 'symlink.zip')
+const brokenZip = path.join(__dirname, 'broken.zip')
 
-var relativeTarget = './cats'
+const relativeTarget = './cats'
 
 function mkdtemp (t, suffix, callback) {
   fs.mkdtemp(path.join(os.tmpdir(), `extract-zip-${suffix}`), function (err, dirPath) {
@@ -59,7 +59,7 @@ test('symlinks', function (t) {
   t.plan(5)
 
   tempExtract(t, 'symlinks', catsZip, function (dirPath) {
-    var symlink = path.join(dirPath, 'cats', 'orange_symlink')
+    const symlink = path.join(dirPath, 'cats', 'orange_symlink')
 
     exists(t, symlink, 'symlink created')
 
@@ -74,8 +74,8 @@ test('directories', function (t) {
   t.plan(8)
 
   tempExtract(t, 'directories', catsZip, function (dirPath) {
-    var dirWithContent = path.join(dirPath, 'cats', 'orange')
-    var dirWithoutContent = path.join(dirPath, 'cats', 'empty')
+    const dirWithContent = path.join(dirPath, 'cats', 'orange')
+    const dirWithoutContent = path.join(dirPath, 'cats', 'empty')
 
     exists(t, dirWithContent, 'directory created')
 
@@ -175,7 +175,7 @@ if (process.platform !== 'win32') {
 
     mkdtemp(t, 'out-of-bounds-file', function (dirPath) {
       extract(symlinkDestZip, { dir: dirPath }, function (err) {
-        var symlinkDestDir = path.join(dirPath, 'symlink-dest')
+        const symlinkDestDir = path.join(dirPath, 'symlink-dest')
 
         t.true(err instanceof Error, 'is native V8 error')
 
