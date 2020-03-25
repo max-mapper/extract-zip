@@ -140,7 +140,7 @@ test('symlink destination disallowed', function (t) {
       t.false(exists, 'file doesn\'t exist at symlink target')
 
       extract(symlinkDestZip, {dir: dirPath}, function (err) {
-        var canonicalTmp = fs.realpathSync(os.tmpdir())
+        var canonicalTmp = os.tmpdir()
 
         t.true(err instanceof Error, 'is native V8 error')
 
