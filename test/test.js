@@ -101,6 +101,27 @@ test('verify github zip extraction worked', function (t) {
   })
 })
 
+test('opts.onEntry', function (t) {
+  t.plan(3)
+
+  mkdtemp(t, 'onEntry', function (dirPath) {
+    const actualEntries = []
+    const expectedEntries = [
+      'symlink/',
+      'symlink/foo.txt',
+      'symlink/foo_symlink.txt'
+    ]
+    const onEntry = function (entry) {
+      actualEntries.push(entry.fileName)
+    }
+    extract(symlinkZip, { dir: dirPath, onEntry }, function (err) {
+      t.notOk(err)
+
+      t.same(actualEntries, expectedEntries, 'entries should match')
+    })
+  })
+})
+
 test('callback called once', function (t) {
   t.plan(4)
 
