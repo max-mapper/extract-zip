@@ -26,18 +26,24 @@ npm install extract-zip -g
 
 ## JS API
 
-```js
-var extract = require('extract-zip')
-extract(source, {dir: target}, function (err) {
- // extraction is complete. make sure to handle the err
-})
+```javascript
+const extract = require('extract-zip')
+
+async main () {
+  try {
+    await extract(source, { dir: target })
+    console.log('Extraction complete')
+  } catch (err) {
+    // handle any errors
+  }
+}
 ```
 
 ### Options
 
 - `dir` (required) - the path to the directory where the extracted files are written
-- `defaultDirMode` - integer - Directory Mode (permissions) will default to `493` (octal `0755` in integer)
-- `defaultFileMode` - integer - File Mode (permissions) will default to `420` (octal `0644` in integer)
+- `defaultDirMode` - integer - Directory Mode (permissions), defaults to `0o755`
+- `defaultFileMode` - integer - File Mode (permissions), defaults to `0o644`
 - `onEntry` - function - if present, will be called with `(entry, zipfile)`, entry is every entry from the zip file forwarded from the `entry` event from yauzl. `zipfile` is the `yauzl` instance
 
 Default modes are only used if no permissions are set in the zip file.
