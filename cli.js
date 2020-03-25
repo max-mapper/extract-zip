@@ -10,7 +10,7 @@ if (!source) {
   process.exit(1)
 }
 
-extract(source, {dir: dest}, function (err, results) {
+extract(source, { dir: dest }, function (err, results) {
   if (err) {
     console.error('error!', err)
     process.exit(1)

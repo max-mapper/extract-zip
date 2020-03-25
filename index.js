@@ -26,7 +26,7 @@ module.exports = function (zipPath, opts, cb) {
   function openZip () {
     debug('opening', zipPath, 'with opts', opts)
 
-    yauzl.open(zipPath, {lazyEntries: true}, function (err, zipfile) {
+    yauzl.open(zipPath, { lazyEntries: true }, function (err, zipfile) {
       if (err) return cb(err)
 
       var cancelled = false
@@ -48,7 +48,7 @@ module.exports = function (zipPath, opts, cb) {
 
       zipfile.on('entry', function (entry) {
         if (cancelled) {
-          debug('skipping entry', entry.fileName, {cancelled: cancelled})
+          debug('skipping entry', entry.fileName, { cancelled: cancelled })
           return
         }
 
@@ -100,7 +100,7 @@ module.exports = function (zipPath, opts, cb) {
 
       function extractEntry (entry, done) {
         if (cancelled) {
-          debug('skipping entry extraction', entry.fileName, {cancelled: cancelled})
+          debug('skipping entry extraction', entry.fileName, { cancelled: cancelled })
           return setImmediate(done)
         }
 
@@ -151,10 +151,10 @@ module.exports = function (zipPath, opts, cb) {
         var destDir = dest
         if (!isDir) destDir = path.dirname(dest)
 
-        debug('mkdirp', {dir: destDir})
+        debug('mkdirp', { dir: destDir })
         fs.mkdir(destDir, { recursive: true }, function (err) {
           if (err) {
-            debug('mkdirp error', destDir, {error: err})
+            debug('mkdirp error', destDir, { error: err })
             cancelled = true
             return done(err)
           }
@@ -177,7 +177,7 @@ module.exports = function (zipPath, opts, cb) {
             else writeStream()
 
             function writeStream () {
-              var writeStream = fs.createWriteStream(dest, {mode: procMode})
+              var writeStream = fs.createWriteStream(dest, { mode: procMode })
               readStream.pipe(writeStream)
 
               writeStream.on('finish', function () {
@@ -185,7 +185,7 @@ module.exports = function (zipPath, opts, cb) {
               })
 
               writeStream.on('error', function (err) {
-                debug('write error', {error: err})
+                debug('write error', { error: err })
                 cancelled = true
                 return done(err)
               })

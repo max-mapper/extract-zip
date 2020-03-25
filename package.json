@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "rimraf": "^3.0.2",
-    "standard": "^5.2.2",
+    "standard": "^14.3.3",
     "tape": "^4.2.0"
   },
   "directories": {

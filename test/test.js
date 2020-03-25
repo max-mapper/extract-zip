@@ -23,7 +23,7 @@ function mkdtemp (t, suffix, callback) {
 
 function tempExtract (t, suffix, zipPath, callback) {
   mkdtemp(t, suffix, function (dirPath) {
-    extract(zipPath, {dir: dirPath}, function (err) {
+    extract(zipPath, { dir: dirPath }, function (err) {
       t.notOk(err, 'no error when extracting ' + zipPath)
 
       callback(dirPath)
@@ -33,7 +33,7 @@ function tempExtract (t, suffix, zipPath, callback) {
 
 function relativeExtract (callback) {
   rimraf.sync(relativeTarget)
-  extract(catsZip, {dir: relativeTarget}, callback)
+  extract(catsZip, { dir: relativeTarget }, callback)
   rimraf.sync(relativeTarget)
 }
 
@@ -106,7 +106,7 @@ test('callback called once', function (t) {
 
   tempExtract(t, 'callback', symlinkZip, function (dirPath) {
     // this triggers an error due to symlink creation
-    extract(symlinkZip, {dir: dirPath}, function (err) {
+    extract(symlinkZip, { dir: dirPath }, function (err) {
       if (err) t.ok(true, 'error passed')
 
       t.ok(true, 'callback called')
@@ -140,7 +140,7 @@ if (process.platform !== 'win32') {
       fs.exists(path.join(dirPath, 'file.txt'), function (exists) {
         t.false(exists, 'file doesn\'t exist at symlink target')
 
-        extract(symlinkDestZip, {dir: dirPath}, function (err) {
+        extract(symlinkDestZip, { dir: dirPath }, function (err) {
           t.true(err instanceof Error, 'is native V8 error')
 
           if (err) {
@@ -156,7 +156,7 @@ test('no file created out of bound', function (t) {
   t.plan(7)
 
   mkdtemp(t, 'out-of-bounds-file', function (dirPath) {
-    extract(symlinkDestZip, {dir: dirPath}, function (err) {
+    extract(symlinkDestZip, { dir: dirPath }, function (err) {
       var symlinkDestDir = path.join(dirPath, 'symlink-dest')
 
       t.true(err instanceof Error, 'is native V8 error')
@@ -198,7 +198,7 @@ test('extract broken zip', function (t) {
   t.plan(2)
 
   mkdtemp(t, 'broken-zip', function (dirPath) {
-    extract(brokenZip, {dir: dirPath}, function (err) {
+    extract(brokenZip, { dir: dirPath }, function (err) {
       t.ok(err, 'Error: invalid central directory file header signature: 0x2014b00')
     })
   })
