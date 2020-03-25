@@ -159,12 +159,18 @@ function openZip (zipPath, opts, cb) {
             console.log('read err', err)
           })
 
-          if (symlink) writeSymlink()
-          else writeStream()
-
-          function writeStream () {
-            const writeStream = fs.createWriteStream(dest, { mode: procMode })
-            readStream.pipe(writeStream)
+          let writeStream
+          if (symlink) {
+            writeStream = concat(function (data) {
+              const link = data.toString()
+              debug('creating symlink', link, dest)
+              fs.symlink(link, dest, function (err) {
+                if (err) cancelled = true
+                done(err)
+              })
+            })
+          } else {
+            writeStream = fs.createWriteStream(dest, { mode: procMode })
 
             writeStream.on('finish', function () {
               done()
@@ -177,17 +183,7 @@ function openZip (zipPath, opts, cb) {
             })
           }
 
-          // AFAICT the content of the symlink file itself is the symlink target filename string
-          function writeSymlink () {
-            readStream.pipe(concat(function (data) {
-              const link = data.toString()
-              debug('creating symlink', link, dest)
-              fs.symlink(link, dest, function (err) {
-                if (err) cancelled = true
-                done(err)
-              })
-            }))
-          }
+          readStream.pipe(writeStream)
         })
       })
     }
