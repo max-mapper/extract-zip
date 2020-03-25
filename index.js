@@ -96,7 +96,7 @@ class Extractor {
     let isDir = (mode & IFMT) === IFDIR
 
     // Failsafe, borrowed from jsZip
-    if (!isDir && entry.fileName.slice(-1) === '/') {
+    if (!isDir && entry.fileName.endsWith('/')) {
       isDir = true
     }
 
