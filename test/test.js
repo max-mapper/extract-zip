@@ -67,6 +67,7 @@ test('symlinks', function (t) {
       t.same(err, null, "symlink can be stat'd")
       t.ok(stats.isSymbolicLink(), 'symlink is valid')
       fs.readlink(symlink, function (err, linkString) {
+        t.same(err, null, "symlink itself can be read")
         t.equal(linkString, 'orange')
       })
     })
