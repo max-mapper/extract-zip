@@ -28,14 +28,14 @@ npm install extract-zip -g
 
 ```js
 var extract = require('extract-zip')
-extract(sourcePath, {dir: targetPath}, function (err) {
+extract(source, {dir: target}, function (err) {
  // extraction is complete. make sure to handle the err
 })
 ```
 
 ### Options
 
-- `dir` - defaults to `process.cwd()`
+- `dir` (required) - the path to the directory where the extracted files are written
 - `defaultDirMode` - integer - Directory Mode (permissions) will default to `493` (octal `0755` in integer)
 - `defaultFileMode` - integer - File Mode (permissions) will default to `420` (octal `0644` in integer)
 - `onEntry` - function - if present, will be called with `(entry, zipfile)`, entry is every entry from the zip file forwarded from the `entry` event from yauzl. `zipfile` is the `yauzl` instance
