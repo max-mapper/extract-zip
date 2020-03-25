@@ -1,7 +1,6 @@
 var fs = require('fs')
 var path = require('path')
 var yauzl = require('yauzl')
-var mkdirp = require('mkdirp')
 var concat = require('concat-stream')
 var debug = require('debug')('extract-zip')
 
@@ -12,7 +11,7 @@ module.exports = function (zipPath, opts, cb) {
     return cb(new Error('Target directory is expected to be absolute'))
   }
 
-  mkdirp(opts.dir, function (err) {
+  fs.mkdir(opts.dir, { recursive: true }, function (err) {
     if (err) return cb(err)
 
     fs.realpath(opts.dir, function (err, canonicalDir) {
@@ -63,7 +62,7 @@ module.exports = function (zipPath, opts, cb) {
 
         var destDir = path.dirname(path.join(opts.dir, entry.fileName))
 
-        mkdirp(destDir, function (err) {
+        fs.mkdir(destDir, { recursive: true }, function (err) {
           if (err) {
             cancelled = true
             zipfile.close()
@@ -153,7 +152,7 @@ module.exports = function (zipPath, opts, cb) {
         if (!isDir) destDir = path.dirname(dest)
 
         debug('mkdirp', {dir: destDir})
-        mkdirp(destDir, function (err) {
+        fs.mkdir(destDir, { recursive: true }, function (err) {
           if (err) {
             debug('mkdirp error', destDir, {error: err})
             cancelled = true

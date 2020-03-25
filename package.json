@@ -21,10 +21,12 @@
     "zip",
     "extract"
   ],
+  "engines": {
+    "node": ">= 10.12.0"
+  },
   "dependencies": {
     "concat-stream": "^1.6.2",
     "debug": "^2.6.9",
-    "mkdirp": "^0.5.4",
     "yauzl": "^2.10.0"
   },
   "devDependencies": {
