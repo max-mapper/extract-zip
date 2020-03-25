@@ -87,7 +87,7 @@ class Extractor {
     const dest = path.join(this.opts.dir, entry.fileName)
 
     // convert external file attr int into a fs stat mode int
-    let mode = (entry.externalFileAttributes >> 16) & 0xFFFF
+    const mode = (entry.externalFileAttributes >> 16) & 0xFFFF
     // check if it's a symlink or dir (using stat mode constants)
     const IFMT = 61440
     const IFDIR = 16384
@@ -105,35 +105,54 @@ class Extractor {
     const madeBy = entry.versionMadeBy >> 8
     if (!isDir) isDir = (madeBy === 0 && entry.externalFileAttributes === 16)
 
-    // if no mode then default to default modes
-    if (mode === 0) {
-      if (isDir) {
-        if (this.opts.defaultDirMode) mode = parseInt(this.opts.defaultDirMode, 10)
-        if (!mode) mode = 0o755
-      } else {
-        if (this.opts.defaultFileMode) mode = parseInt(this.opts.defaultFileMode, 10)
-        if (!mode) mode = 0o644
-      }
-    }
-
     debug('extracting entry', { filename: entry.fileName, isDir: isDir, isSymlink: symlink })
 
     // reverse umask first (~)
     const umask = ~process.umask()
     // & with processes umask to override invalid perms
-    const procMode = mode & umask
+    const procMode = this.getExtractedMode(mode, isDir) & umask
 
     // always ensure folders are created
     const destDir = isDir ? dest : path.dirname(dest)
 
-    debug('mkdirp', { dir: destDir })
-    await fs.mkdir(destDir, { recursive: true })
+    const mkdirOptions = { recursive: true }
+    if (isDir) {
+      mkdirOptions.mode = procMode
+    }
+    debug('mkdir', { dir: destDir, ...mkdirOptions })
+    await fs.mkdir(destDir, mkdirOptions)
     if (isDir) return
 
     debug('opening read stream', dest)
     const readStream = await promisify(this.zipfile.openReadStream.bind(this.zipfile))(entry)
 
     await pipeline(readStream, this.getWriteStream(symlink, dest, procMode))
+  }
+
+  getExtractedMode (entryMode, isDir) {
+    let mode = entryMode
+    // Set defaults, if necessary
+    if (mode === 0) {
+      if (isDir) {
+        if (this.opts.defaultDirMode) {
+          mode = parseInt(this.opts.defaultDirMode, 10)
+        }
+
+        if (!mode) {
+          mode = 0o755
+        }
+      } else {
+        if (this.opts.defaultFileMode) {
+          mode = parseInt(this.opts.defaultFileMode, 10)
+        }
+
+        if (!mode) {
+          mode = 0o644
+        }
+      }
+    }
+
+    return mode
   }
 
   getWriteStream (isSymlink, dest, procMode) {

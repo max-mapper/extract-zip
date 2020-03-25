@@ -8,6 +8,7 @@ const test = require('ava')
 
 const catsZip = path.join(__dirname, 'cats.zip')
 const githubZip = path.join(__dirname, 'github.zip')
+const noPermissionsZip = path.join(__dirname, 'no-permissions.zip')
 const subdirZip = path.join(__dirname, 'file-in-subdir-without-subdir-entry.zip')
 const symlinkDestZip = path.join(__dirname, 'symlink-dest.zip')
 const symlinkZip = path.join(__dirname, 'symlink.zip')
@@ -33,6 +34,12 @@ function exists (t, pathToCheck, message) {
 function doesntExist (t, pathToCheck, message) {
   const exists = existsSync(pathToCheck)
   t.false(exists, message)
+}
+
+async function assertPermissions (t, pathToCheck, expectedMode) {
+  const stats = await fs.stat(pathToCheck)
+  const actualMode = (stats.mode & 0o777)
+  t.is(actualMode, expectedMode)
 }
 
 test('files', async t => {
@@ -71,6 +78,9 @@ test('directories', async t => {
 test('verify github zip extraction worked', async t => {
   const dirPath = await tempExtract(t, 'verify-extraction', githubZip)
   exists(t, path.join(dirPath, 'extract-zip-master', 'test'), 'folder created')
+  if (process.platform !== 'win32') {
+    await assertPermissions(t, path.join(dirPath, 'extract-zip-master', 'test'), 0o755)
+  }
 })
 
 test('opts.onEntry', async t => {
@@ -118,6 +128,26 @@ if (process.platform !== 'win32') {
     exists(t, path.join(symlinkDestDir, 'ccc'), 'parent folder created')
     doesntExist(t, path.join(symlinkDestDir, 'ccc/file.txt'), 'file not created in original folder')
     doesntExist(t, path.join(dirPath, 'file.txt'), 'file not created in symlink target')
+  })
+
+  test('defaultDirMode', async t => {
+    const dirPath = await mkdtemp(t, 'default-dir-mode')
+    const defaultDirMode = 0o700
+    await extract(githubZip, { dir: dirPath, defaultDirMode })
+    await assertPermissions(t, path.join(dirPath, 'extract-zip-master', 'test'), defaultDirMode)
+  })
+
+  test('defaultFileMode not set', async t => {
+    const dirPath = await mkdtemp(t, 'default-file-mode')
+    await extract(noPermissionsZip, { dir: dirPath })
+    await assertPermissions(t, path.join(dirPath, 'folder', 'file.txt'), 0o644)
+  })
+
+  test('defaultFileMode', async t => {
+    const dirPath = await mkdtemp(t, 'default-file-mode')
+    const defaultFileMode = 0o600
+    await extract(noPermissionsZip, { dir: dirPath, defaultFileMode })
+    await assertPermissions(t, path.join(dirPath, 'folder', 'file.txt'), defaultFileMode)
   })
 }
 
