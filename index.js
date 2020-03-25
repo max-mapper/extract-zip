@@ -1,6 +1,6 @@
-const concat = require('concat-stream')
 const debug = require('debug')('extract-zip')
 const { createWriteStream, promises: fs } = require('fs')
+const getStream = require('get-stream')
 const path = require('path')
 const { promisify } = require('util')
 const stream = require('stream')
@@ -126,7 +126,13 @@ class Extractor {
     debug('opening read stream', dest)
     const readStream = await promisify(this.zipfile.openReadStream.bind(this.zipfile))(entry)
 
-    await pipeline(readStream, this.getWriteStream(symlink, dest, procMode))
+    if (symlink) {
+      const link = await getStream(readStream)
+      debug('creating symlink', link, dest)
+      await fs.symlink(link, dest)
+    } else {
+      await pipeline(readStream, createWriteStream(dest, { mode: procMode }))
+    }
   }
 
   getExtractedMode (entryMode, isDir) {
@@ -153,18 +159,6 @@ class Extractor {
     }
 
     return mode
-  }
-
-  getWriteStream (isSymlink, dest, procMode) {
-    if (isSymlink) {
-      return concat(async data => {
-        const link = data.toString()
-        debug('creating symlink', link, dest)
-        await fs.symlink(link, dest)
-      })
-    } else {
-      return createWriteStream(dest, { mode: procMode })
-    }
   }
 }
 

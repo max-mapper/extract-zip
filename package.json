@@ -27,8 +27,8 @@
     "node": ">= 10.12.0"
   },
   "dependencies": {
-    "concat-stream": "^2.0.0",
     "debug": "^4.1.1",
+    "get-stream": "^5.1.0",
     "yauzl": "^2.10.0"
   },
   "devDependencies": {
