@@ -171,7 +171,7 @@ class Extractor {
 module.exports = async function (zipPath, opts) {
   debug('creating target directory', opts.dir)
 
-  if (path.isAbsolute(opts.dir) === false) {
+  if (!path.isAbsolute(opts.dir)) {
     throw new Error('Target directory is expected to be absolute')
   }
 
