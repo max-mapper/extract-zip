@@ -132,23 +132,25 @@ test('no folder created', function (t) {
   })
 })
 
-test('symlink destination disallowed', function (t) {
-  t.plan(4)
+if (process.platform !== 'win32') {
+  test('symlink destination disallowed', function (t) {
+    t.plan(4)
 
-  mkdtemp(t, 'symlink-destination-disallowed', function (dirPath) {
-    fs.exists(path.join(dirPath, 'file.txt'), function (exists) {
-      t.false(exists, 'file doesn\'t exist at symlink target')
+    mkdtemp(t, 'symlink-destination-disallowed', function (dirPath) {
+      fs.exists(path.join(dirPath, 'file.txt'), function (exists) {
+        t.false(exists, 'file doesn\'t exist at symlink target')
 
-      extract(symlinkDestZip, {dir: dirPath}, function (err) {
-        t.true(err instanceof Error, 'is native V8 error')
+        extract(symlinkDestZip, {dir: dirPath}, function (err) {
+          t.true(err instanceof Error, 'is native V8 error')
 
-        if (err) {
-          t.match(err.message, /Out of bound path ".*?" found while processing file symlink-dest\/aaa\/file.txt/, 'has descriptive error message')
-        }
+          if (err) {
+            t.match(err.message, /Out of bound path ".*?" found while processing file symlink-dest\/aaa\/file.txt/, 'has descriptive error message')
+          }
+        })
       })
     })
   })
-})
+}
 
 test('no file created out of bound', function (t) {
   t.plan(7)
