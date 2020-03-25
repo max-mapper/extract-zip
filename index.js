@@ -1,211 +1,162 @@
-const fs = require('fs')
-const path = require('path')
-const yauzl = require('yauzl')
 const concat = require('concat-stream')
 const debug = require('debug')('extract-zip')
+const { createWriteStream, promises: fs } = require('fs')
+const path = require('path')
+const { promisify } = require('util')
+const stream = require('stream')
+const yauzl = require('yauzl')
 
-function openZip (zipPath, opts, cb) {
-  debug('opening', zipPath, 'with opts', opts)
+const openZip = promisify(yauzl.open)
+const pipeline = promisify(stream.pipeline)
 
-  yauzl.open(zipPath, { lazyEntries: true }, function (err, zipfile) {
-    if (err) return cb(err)
+class Extractor {
+  constructor (zipPath, opts) {
+    this.zipPath = zipPath
+    this.opts = opts
+  }
 
-    let cancelled = false
+  async extract () {
+    debug('opening', this.zipPath, 'with opts', this.opts)
 
-    zipfile.on('error', function (err) {
-      if (err) {
-        cancelled = true
-        return cb(err)
-      }
-    })
-    zipfile.readEntry()
+    this.zipfile = await openZip(this.zipPath, { lazyEntries: true })
+    this.canceled = false
 
-    zipfile.on('close', function () {
-      if (!cancelled) {
-        debug('zip extraction complete')
-        cb()
-      }
-    })
+    return new Promise((resolve, reject) => {
+      this.zipfile.on('error', err => {
+        this.canceled = true
+        reject(err)
+      })
+      this.zipfile.readEntry()
 
-    zipfile.on('entry', function (entry) {
-      /* istanbul ignore if */
-      if (cancelled) {
-        debug('skipping entry', entry.fileName, { cancelled: cancelled })
-        return
-      }
+      this.zipfile.on('close', () => {
+        if (!this.canceled) {
+          debug('zip extraction complete')
+          resolve()
+        }
+      })
 
-      debug('zipfile entry', entry.fileName)
-
-      if (entry.fileName.startsWith('__MACOSX/')) {
-        zipfile.readEntry()
-        return
-      }
-
-      const destDir = path.dirname(path.join(opts.dir, entry.fileName))
-
-      fs.mkdir(destDir, { recursive: true }, function (err) {
+      this.zipfile.on('entry', async entry => {
         /* istanbul ignore if */
-        if (err) {
-          cancelled = true
-          zipfile.close()
-          return cb(err)
+        if (this.canceled) {
+          debug('skipping entry', entry.fileName, { cancelled: this.canceled })
+          return
         }
 
-        fs.realpath(destDir, function (err, canonicalDestDir) {
-          /* istanbul ignore if */
-          if (err) {
-            cancelled = true
-            zipfile.close()
-            return cb(err)
+        debug('zipfile entry', entry.fileName)
+
+        if (entry.fileName.startsWith('__MACOSX/')) {
+          this.zipfile.readEntry()
+          return
+        }
+
+        const destDir = path.dirname(path.join(this.opts.dir, entry.fileName))
+
+        try {
+          await fs.mkdir(destDir, { recursive: true })
+
+          const canonicalDestDir = await fs.realpath(destDir)
+          const relativeDestDir = path.relative(this.opts.dir, canonicalDestDir)
+
+          if (relativeDestDir.split(path.sep).includes('..')) {
+            throw new Error(`Out of bound path "${canonicalDestDir}" found while processing file ${entry.fileName}`)
           }
 
-          const relativeDestDir = path.relative(opts.dir, canonicalDestDir)
-
-          if (relativeDestDir.split(path.sep).indexOf('..') !== -1) {
-            cancelled = true
-            zipfile.close()
-            return cb(new Error('Out of bound path "' + canonicalDestDir + '" found while processing file ' + entry.fileName))
-          }
-
-          extractEntry(entry, function (err) {
-            // if any extraction fails then abort everything
-            if (err) {
-              cancelled = true
-              zipfile.close()
-              return cb(err)
-            }
-            debug('finished processing', entry.fileName)
-            zipfile.readEntry()
-          })
-        })
+          await this.extractEntry(entry)
+          debug('finished processing', entry.fileName)
+          this.zipfile.readEntry()
+        } catch (err) {
+          this.canceled = true
+          this.zipfile.close()
+          reject(err)
+        }
       })
     })
+  }
 
-    function extractEntry (entry, done) {
-      /* istanbul ignore if */
-      if (cancelled) {
-        debug('skipping entry extraction', entry.fileName, { cancelled: cancelled })
-        return setImmediate(done)
-      }
-
-      if (opts.onEntry) {
-        opts.onEntry(entry, zipfile)
-      }
-
-      const dest = path.join(opts.dir, entry.fileName)
-
-      // convert external file attr int into a fs stat mode int
-      let mode = (entry.externalFileAttributes >> 16) & 0xFFFF
-      // check if it's a symlink or dir (using stat mode constants)
-      const IFMT = 61440
-      const IFDIR = 16384
-      const IFLNK = 40960
-      const symlink = (mode & IFMT) === IFLNK
-      let isDir = (mode & IFMT) === IFDIR
-
-      // Failsafe, borrowed from jsZip
-      if (!isDir && entry.fileName.slice(-1) === '/') {
-        isDir = true
-      }
-
-      // check for windows weird way of specifying a directory
-      // https://github.com/maxogden/extract-zip/issues/13#issuecomment-154494566
-      const madeBy = entry.versionMadeBy >> 8
-      if (!isDir) isDir = (madeBy === 0 && entry.externalFileAttributes === 16)
-
-      // if no mode then default to default modes
-      if (mode === 0) {
-        if (isDir) {
-          if (opts.defaultDirMode) mode = parseInt(opts.defaultDirMode, 10)
-          if (!mode) mode = 0o755
-        } else {
-          if (opts.defaultFileMode) mode = parseInt(opts.defaultFileMode, 10)
-          if (!mode) mode = 0o644
-        }
-      }
-
-      debug('extracting entry', { filename: entry.fileName, isDir: isDir, isSymlink: symlink })
-
-      // reverse umask first (~)
-      const umask = ~process.umask()
-      // & with processes umask to override invalid perms
-      const procMode = mode & umask
-
-      // always ensure folders are created
-      const destDir = isDir ? dest : path.dirname(dest)
-
-      debug('mkdirp', { dir: destDir })
-      fs.mkdir(destDir, { recursive: true }, function (err) {
-        /* istanbul ignore if */
-        if (err) {
-          debug('mkdirp error', destDir, { error: err })
-          cancelled = true
-          return done(err)
-        }
-
-        if (isDir) return done()
-
-        debug('opening read stream', dest)
-        zipfile.openReadStream(entry, function (err, readStream) {
-          /* istanbul ignore if */
-          if (err) {
-            debug('openReadStream error', err)
-            cancelled = true
-            return done(err)
-          }
-
-          readStream.on('error', function (err) {
-            /* istanbul ignore next */
-            console.log('read err', err)
-          })
-
-          let writeStream
-          if (symlink) {
-            writeStream = concat(function (data) {
-              const link = data.toString()
-              debug('creating symlink', link, dest)
-              fs.symlink(link, dest, function (err) {
-                if (err) cancelled = true
-                done(err)
-              })
-            })
-          } else {
-            writeStream = fs.createWriteStream(dest, { mode: procMode })
-
-            writeStream.on('finish', function () {
-              done()
-            })
-
-            writeStream.on('error', /* istanbul ignore next */ function (err) {
-              debug('write error', { error: err })
-              cancelled = true
-              return done(err)
-            })
-          }
-
-          readStream.pipe(writeStream)
-        })
-      })
+  async extractEntry (entry) {
+    /* istanbul ignore if */
+    if (this.canceled) {
+      debug('skipping entry extraction', entry.fileName, { cancelled: this.canceled })
+      return
     }
-  })
+
+    if (this.opts.onEntry) {
+      this.opts.onEntry(entry, this.zipfile)
+    }
+
+    const dest = path.join(this.opts.dir, entry.fileName)
+
+    // convert external file attr int into a fs stat mode int
+    let mode = (entry.externalFileAttributes >> 16) & 0xFFFF
+    // check if it's a symlink or dir (using stat mode constants)
+    const IFMT = 61440
+    const IFDIR = 16384
+    const IFLNK = 40960
+    const symlink = (mode & IFMT) === IFLNK
+    let isDir = (mode & IFMT) === IFDIR
+
+    // Failsafe, borrowed from jsZip
+    if (!isDir && entry.fileName.slice(-1) === '/') {
+      isDir = true
+    }
+
+    // check for windows weird way of specifying a directory
+    // https://github.com/maxogden/extract-zip/issues/13#issuecomment-154494566
+    const madeBy = entry.versionMadeBy >> 8
+    if (!isDir) isDir = (madeBy === 0 && entry.externalFileAttributes === 16)
+
+    // if no mode then default to default modes
+    if (mode === 0) {
+      if (isDir) {
+        if (this.opts.defaultDirMode) mode = parseInt(this.opts.defaultDirMode, 10)
+        if (!mode) mode = 0o755
+      } else {
+        if (this.opts.defaultFileMode) mode = parseInt(this.opts.defaultFileMode, 10)
+        if (!mode) mode = 0o644
+      }
+    }
+
+    debug('extracting entry', { filename: entry.fileName, isDir: isDir, isSymlink: symlink })
+
+    // reverse umask first (~)
+    const umask = ~process.umask()
+    // & with processes umask to override invalid perms
+    const procMode = mode & umask
+
+    // always ensure folders are created
+    const destDir = isDir ? dest : path.dirname(dest)
+
+    debug('mkdirp', { dir: destDir })
+    await fs.mkdir(destDir, { recursive: true })
+    if (isDir) return
+
+    debug('opening read stream', dest)
+    const readStream = await promisify(this.zipfile.openReadStream.bind(this.zipfile))(entry)
+
+    await pipeline(readStream, this.getWriteStream(symlink, dest, procMode))
+  }
+
+  getWriteStream (isSymlink, dest, procMode) {
+    if (isSymlink) {
+      return concat(async data => {
+        const link = data.toString()
+        debug('creating symlink', link, dest)
+        await fs.symlink(link, dest)
+      })
+    } else {
+      return createWriteStream(dest, { mode: procMode })
+    }
+  }
 }
 
-module.exports = function (zipPath, opts, cb) {
+module.exports = async function (zipPath, opts) {
   debug('creating target directory', opts.dir)
 
   if (path.isAbsolute(opts.dir) === false) {
-    return cb(new Error('Target directory is expected to be absolute'))
+    throw new Error('Target directory is expected to be absolute')
   }
 
-  fs.mkdir(opts.dir, { recursive: true }, function (err) {
-    if (err) return cb(err)
-
-    fs.realpath(opts.dir, function (err, canonicalDir) {
-      if (err) return cb(err)
-
-      opts.dir = canonicalDir
-
-      openZip(zipPath, opts, cb)
-    })
-  })
+  await fs.mkdir(opts.dir, { recursive: true })
+  opts.dir = await fs.realpath(opts.dir)
+  return new Extractor(zipPath, opts).extract()
 }
