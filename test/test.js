@@ -56,7 +56,7 @@ test('files', function (t) {
 })
 
 test('symlinks', function (t) {
-  t.plan(6)
+  t.plan(7)
 
   tempExtract(t, 'symlinks', catsZip, function (dirPath) {
     const symlink = path.join(dirPath, 'cats', 'orange_symlink')
