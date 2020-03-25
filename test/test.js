@@ -56,7 +56,7 @@ test('files', function (t) {
 })
 
 test('symlinks', function (t) {
-  t.plan(5)
+  t.plan(6)
 
   tempExtract(t, 'symlinks', catsZip, function (dirPath) {
     const symlink = path.join(dirPath, 'cats', 'orange_symlink')
@@ -64,8 +64,11 @@ test('symlinks', function (t) {
     exists(t, symlink, 'symlink created')
 
     fs.lstat(symlink, function (err, stats) {
-      t.same(err, null, 'symlink can be stat\'d')
+      t.same(err, null, "symlink can be stat'd")
       t.ok(stats.isSymbolicLink(), 'symlink is valid')
+      fs.readlink(symlink, function (err, linkString) {
+        t.equal(linkString, 'orange')
+      })
     })
   })
 })
