@@ -38,7 +38,6 @@ async main () {
   }
 }
 ```
-```
 
 ### Options
 
