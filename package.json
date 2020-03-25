@@ -9,6 +9,9 @@
   "scripts": {
     "test": "standard && node test/test.js"
   },
+  "files": [
+    "*.js"
+  ],
   "author": "max ogden",
   "license": "BSD-2-Clause",
   "repository": "maxogden/extract-zip",
