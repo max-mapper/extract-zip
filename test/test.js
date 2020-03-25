@@ -140,12 +140,10 @@ test('symlink destination disallowed', function (t) {
       t.false(exists, 'file doesn\'t exist at symlink target')
 
       extract(symlinkDestZip, {dir: dirPath}, function (err) {
-        var canonicalTmp = os.tmpdir()
-
         t.true(err instanceof Error, 'is native V8 error')
 
         if (err) {
-          t.same(err.message, 'Out of bound path "' + canonicalTmp + '" found while processing file symlink-dest/aaa/file.txt', 'has descriptive error message')
+          t.match(err.message, /Out of bound path ".*?" found while processing file symlink-dest\/aaa\/file.txt/, 'has descriptive error message')
         }
       })
     })
