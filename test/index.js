@@ -3,7 +3,7 @@ const fs = require('fs')
 const os = require('os')
 const path = require('path')
 const rimraf = require('rimraf')
-const test = require('tape')
+const test = require('ava')
 
 const catsZip = path.join(__dirname, 'cats.zip')
 const githubZip = path.join(__dirname, 'github.zip')
@@ -16,7 +16,7 @@ const relativeTarget = './cats'
 
 function mkdtemp (t, suffix, callback) {
   fs.mkdtemp(path.join(os.tmpdir(), `extract-zip-${suffix}`), function (err, dirPath) {
-    t.notOk(err, 'no error when creating temporary directory')
+    t.falsy(err, 'no error when creating temporary directory')
     callback(dirPath)
   })
 }
@@ -24,7 +24,7 @@ function mkdtemp (t, suffix, callback) {
 function tempExtract (t, suffix, zipPath, callback) {
   mkdtemp(t, suffix, function (dirPath) {
     extract(zipPath, { dir: dirPath }, function (err) {
-      t.notOk(err, 'no error when extracting ' + zipPath)
+      t.falsy(err, 'no error when extracting ' + zipPath)
 
       callback(dirPath)
     })
@@ -47,36 +47,32 @@ function doesntExist (t, pathToCheck, message) {
   t.false(exists, message)
 }
 
-test('files', function (t) {
-  t.plan(3)
-
+test.cb('files', function (t) {
   tempExtract(t, 'files', catsZip, function (dirPath) {
     exists(t, path.join(dirPath, 'cats', 'gJqEYBs.jpg'), 'file created')
+    t.end()
   })
 })
 
-test('symlinks', function (t) {
-  t.plan(7)
-
+test.cb('symlinks', function (t) {
   tempExtract(t, 'symlinks', catsZip, function (dirPath) {
     const symlink = path.join(dirPath, 'cats', 'orange_symlink')
 
     exists(t, symlink, 'symlink created')
 
     fs.lstat(symlink, function (err, stats) {
-      t.same(err, null, "symlink can be stat'd")
-      t.ok(stats.isSymbolicLink(), 'symlink is valid')
+      t.deepEqual(err, null, "symlink can be stat'd")
+      t.truthy(stats.isSymbolicLink(), 'symlink is valid')
       fs.readlink(symlink, function (err, linkString) {
-        t.same(err, null, 'symlink itself can be read')
-        t.equal(linkString, 'orange')
+        t.deepEqual(err, null, 'symlink itself can be read')
+        t.is(linkString, 'orange')
+        t.end()
       })
     })
   })
 })
 
-test('directories', function (t) {
-  t.plan(8)
-
+test.cb('directories', function (t) {
   tempExtract(t, 'directories', catsZip, function (dirPath) {
     const dirWithContent = path.join(dirPath, 'cats', 'orange')
     const dirWithoutContent = path.join(dirPath, 'cats', 'empty')
@@ -84,30 +80,28 @@ test('directories', function (t) {
     exists(t, dirWithContent, 'directory created')
 
     fs.readdir(dirWithContent, function (err, files) {
-      t.same(err, null, 'directory can be read')
-      t.ok(files.length > 0, 'directory has files')
+      t.deepEqual(err, null, 'directory can be read')
+      t.truthy(files.length > 0, 'directory has files')
     })
 
     exists(t, dirWithoutContent, 'empty directory created')
 
     fs.readdir(dirWithoutContent, function (err, files) {
-      t.same(err, null, 'empty directory can be read')
-      t.ok(files.length === 0, 'empty directory has no files')
+      t.deepEqual(err, null, 'empty directory can be read')
+      t.truthy(files.length === 0, 'empty directory has no files')
+      t.end()
     })
   })
 })
 
-test('verify github zip extraction worked', function (t) {
-  t.plan(3)
-
+test.cb('verify github zip extraction worked', function (t) {
   tempExtract(t, 'verify-extraction', githubZip, function (dirPath) {
     exists(t, path.join(dirPath, 'extract-zip-master', 'test'), 'folder created')
+    t.end()
   })
 })
 
-test('opts.onEntry', function (t) {
-  t.plan(3)
-
+test.cb('opts.onEntry', function (t) {
   mkdtemp(t, 'onEntry', function (dirPath) {
     const actualEntries = []
     const expectedEntries = [
@@ -119,94 +113,89 @@ test('opts.onEntry', function (t) {
       actualEntries.push(entry.fileName)
     }
     extract(symlinkZip, { dir: dirPath, onEntry }, function (err) {
-      t.notOk(err)
+      t.falsy(err)
 
-      t.same(actualEntries, expectedEntries, 'entries should match')
+      t.deepEqual(actualEntries, expectedEntries, 'entries should match')
+      t.end()
     })
   })
 })
 
-test('callback called once', function (t) {
-  t.plan(4)
-
+test.cb('callback called once', function (t) {
   tempExtract(t, 'callback', symlinkZip, function (dirPath) {
     // this triggers an error due to symlink creation
     extract(symlinkZip, { dir: dirPath }, function (err) {
-      if (err) t.ok(true, 'error passed')
+      if (err) t.truthy(true, 'error passed')
 
-      t.ok(true, 'callback called')
+      t.truthy(true, 'callback called')
+      t.end()
     })
   })
 })
 
-test('relative target directory', function (t) {
-  t.plan(2)
-
+test.cb('relative target directory', function (t) {
   relativeExtract(function (err) {
-    t.true(err instanceof Error, 'is native V8 error')
-    t.same(err.message, 'Target directory is expected to be absolute', 'has descriptive error message')
+    t.truthy(err instanceof Error, 'is native V8 error')
+    t.deepEqual(err.message, 'Target directory is expected to be absolute', 'has descriptive error message')
+    t.end()
   })
 })
 
-test('no folder created', function (t) {
-  t.plan(2)
-
+test.cb('no folder created', function (t) {
   relativeExtract(function (err) {
-    t.true(err instanceof Error, 'is native V8 error')
+    t.truthy(err instanceof Error, 'is native V8 error')
     doesntExist(t, path.join(__dirname, relativeTarget), 'file not created')
+    t.end()
   })
 })
 
 if (process.platform !== 'win32') {
-  test('symlink destination disallowed', function (t) {
-    t.plan(4)
-
+  test.cb('symlink destination disallowed', function (t) {
     mkdtemp(t, 'symlink-destination-disallowed', function (dirPath) {
       doesntExist(t, path.join(dirPath, 'file.txt'), "file doesn't exist at symlink target")
 
       extract(symlinkDestZip, { dir: dirPath }, function (err) {
-        t.true(err instanceof Error, 'is native V8 error')
+        t.truthy(err instanceof Error, 'is native V8 error')
 
         if (err) {
-          t.match(err.message, /Out of bound path ".*?" found while processing file symlink-dest\/aaa\/file.txt/, 'has descriptive error message')
+          t.regex(err.message, /Out of bound path ".*?" found while processing file symlink-dest\/aaa\/file.txt/, 'has descriptive error message')
         }
+
+        t.end()
       })
     })
   })
 
-  test('no file created out of bound', function (t) {
-    t.plan(7)
-
+  test.cb('no file created out of bound', function (t) {
     mkdtemp(t, 'out-of-bounds-file', function (dirPath) {
       extract(symlinkDestZip, { dir: dirPath }, function (err) {
         const symlinkDestDir = path.join(dirPath, 'symlink-dest')
 
-        t.true(err instanceof Error, 'is native V8 error')
+        t.truthy(err instanceof Error, 'is native V8 error')
 
         exists(t, symlinkDestDir, 'target folder created')
         exists(t, path.join(symlinkDestDir, 'aaa'), 'symlink created')
         exists(t, path.join(symlinkDestDir, 'ccc'), 'parent folder created')
         doesntExist(t, path.join(symlinkDestDir, 'ccc/file.txt'), 'file not created in original folder')
         doesntExist(t, path.join(dirPath, 'file.txt'), 'file not created in symlink target')
+        t.end()
       })
     })
   })
 }
 
-test('files in subdirs where the subdir does not have its own entry is extracted', function (t) {
-  t.plan(3)
-
+test.cb('files in subdirs where the subdir does not have its own entry is extracted', function (t) {
   tempExtract(t, 'subdir-file', subdirZip, function (dirPath) {
     exists(t, path.join(dirPath, 'foo', 'bar'), 'file created')
+    t.end()
   })
 })
 
-test('extract broken zip', function (t) {
-  t.plan(2)
-
+test.cb('extract broken zip', function (t) {
   mkdtemp(t, 'broken-zip', function (dirPath) {
     extract(brokenZip, { dir: dirPath }, function (err) {
-      t.ok(err, 'Error: invalid central directory file header signature: 0x2014b00')
+      t.truthy(err, 'Error: invalid central directory file header signature: 0x2014b00')
+      t.end()
     })
   })
 })
