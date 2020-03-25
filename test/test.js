@@ -169,25 +169,25 @@ if (process.platform !== 'win32') {
       })
     })
   })
-}
 
-test('no file created out of bound', function (t) {
-  t.plan(7)
+  test('no file created out of bound', function (t) {
+    t.plan(7)
 
-  mkdtemp(t, 'out-of-bounds-file', function (dirPath) {
-    extract(symlinkDestZip, { dir: dirPath }, function (err) {
-      var symlinkDestDir = path.join(dirPath, 'symlink-dest')
+    mkdtemp(t, 'out-of-bounds-file', function (dirPath) {
+      extract(symlinkDestZip, { dir: dirPath }, function (err) {
+        var symlinkDestDir = path.join(dirPath, 'symlink-dest')
 
-      t.true(err instanceof Error, 'is native V8 error')
+        t.true(err instanceof Error, 'is native V8 error')
 
-      exists(t, symlinkDestDir, 'target folder created')
-      exists(t, path.join(symlinkDestDir, 'aaa'), 'symlink created')
-      exists(t, path.join(symlinkDestDir, 'ccc'), 'parent folder created')
-      doesntExist(t, path.join(symlinkDestDir, 'ccc/file.txt'), 'file not created in original folder')
-      doesntExist(t, path.join(dirPath, 'file.txt'), 'file not created in symlink target')
+        exists(t, symlinkDestDir, 'target folder created')
+        exists(t, path.join(symlinkDestDir, 'aaa'), 'symlink created')
+        exists(t, path.join(symlinkDestDir, 'ccc'), 'parent folder created')
+        doesntExist(t, path.join(symlinkDestDir, 'ccc/file.txt'), 'file not created in original folder')
+        doesntExist(t, path.join(dirPath, 'file.txt'), 'file not created in symlink target')
+      })
     })
   })
-})
+}
 
 test('files in subdirs where the subdir does not have its own entry is extracted', function (t) {
   t.plan(3)
