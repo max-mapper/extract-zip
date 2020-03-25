@@ -47,6 +47,7 @@ module.exports = function (zipPath, opts, cb) {
       })
 
       zipfile.on('entry', function (entry) {
+        /* istanbul ignore if */
         if (cancelled) {
           debug('skipping entry', entry.fileName, { cancelled: cancelled })
           return
@@ -63,6 +64,7 @@ module.exports = function (zipPath, opts, cb) {
         var destDir = path.dirname(path.join(opts.dir, entry.fileName))
 
         fs.mkdir(destDir, { recursive: true }, function (err) {
+          /* istanbul ignore if */
           if (err) {
             cancelled = true
             zipfile.close()
@@ -70,6 +72,7 @@ module.exports = function (zipPath, opts, cb) {
           }
 
           fs.realpath(destDir, function (err, canonicalDestDir) {
+            /* istanbul ignore if */
             if (err) {
               cancelled = true
               zipfile.close()
@@ -99,6 +102,7 @@ module.exports = function (zipPath, opts, cb) {
       })
 
       function extractEntry (entry, done) {
+        /* istanbul ignore if */
         if (cancelled) {
           debug('skipping entry extraction', entry.fileName, { cancelled: cancelled })
           return setImmediate(done)
@@ -153,6 +157,7 @@ module.exports = function (zipPath, opts, cb) {
 
         debug('mkdirp', { dir: destDir })
         fs.mkdir(destDir, { recursive: true }, function (err) {
+          /* istanbul ignore if */
           if (err) {
             debug('mkdirp error', destDir, { error: err })
             cancelled = true
@@ -163,6 +168,7 @@ module.exports = function (zipPath, opts, cb) {
 
           debug('opening read stream', dest)
           zipfile.openReadStream(entry, function (err, readStream) {
+            /* istanbul ignore if */
             if (err) {
               debug('openReadStream error', err)
               cancelled = true
@@ -170,6 +176,7 @@ module.exports = function (zipPath, opts, cb) {
             }
 
             readStream.on('error', function (err) {
+              /* istanbul ignore next */
               console.log('read err', err)
             })
 
@@ -184,7 +191,7 @@ module.exports = function (zipPath, opts, cb) {
                 done()
               })
 
-              writeStream.on('error', function (err) {
+              writeStream.on('error', /* istanbul ignore next */ function (err) {
                 debug('write error', { error: err })
                 cancelled = true
                 return done(err)
