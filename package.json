@@ -1,6 +1,6 @@
 {
   "name": "extract-zip",
-  "version": "1.7.0",
+  "version": "2.0.0",
   "description": "unzip a zip file into a directory using 100% javascript",
   "main": "index.js",
   "types": "index.d.ts",
