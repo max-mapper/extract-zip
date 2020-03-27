@@ -3,17 +3,22 @@
   "version": "1.7.0",
   "description": "unzip a zip file into a directory using 100% javascript",
   "main": "index.js",
+  "types": "index.d.ts",
   "bin": {
     "extract-zip": "cli.js"
   },
   "scripts": {
     "ava": "ava",
     "coverage": "nyc ava",
-    "lint": "eslint .",
-    "test": "npm run lint && ava"
+    "lint": "yarn lint:js && yarn lint:ts && yarn tsd",
+    "lint:js": "eslint .",
+    "lint:ts": "eslint --config .eslintrc.typescript.js --ext .ts .",
+    "test": "yarn lint && ava",
+    "tsd": "tsd"
   },
   "files": [
-    "*.js"
+    "*.js",
+    "index.d.ts"
   ],
   "author": "max ogden",
   "license": "BSD-2-Clause",
@@ -31,7 +36,12 @@
     "get-stream": "^5.1.0",
     "yauzl": "^2.10.0"
   },
+  "optionalDependencies": {
+    "@types/yauzl": "^2.9.1"
+  },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^2.25.0",
+    "@typescript-eslint/parser": "^2.25.0",
     "ava": "^3.5.1",
     "eslint": "^6.8.0",
     "eslint-config-standard": "^14.1.1",
@@ -43,7 +53,9 @@
     "fs-extra": "^9.0.0",
     "husky": "^4.2.3",
     "lint-staged": "^10.0.9",
-    "nyc": "^15.0.0"
+    "nyc": "^15.0.0",
+    "tsd": "^0.11.0",
+    "typescript": "^3.8.3"
   },
   "eslintConfig": {
     "extends": [
@@ -62,6 +74,7 @@
     }
   },
   "lint-staged": {
-    "*.js": "eslint --fix"
+    "*.js": "yarn lint:js --fix",
+    "*.ts": "yarn lint:ts --fix"
   }
 }
