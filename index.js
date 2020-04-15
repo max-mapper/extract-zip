@@ -1,11 +1,14 @@
 const debug = require('debug')('extract-zip')
-// eslint-disable-next-line node/no-unsupported-features/node-builtins
-const { createWriteStream, promises: fs } = require('fs')
+const fs = require('fs')
 const getStream = require('get-stream')
 const path = require('path')
 const { promisify } = require('util')
 const stream = require('stream')
 const yauzl = require('yauzl')
+
+const mkdirAsync = promisify(fs.mkdir.bind(fs))
+const realpathAsync = promisify(fs.realpath.bind(fs))
+const symlinkAsync = promisify(fs.symlink.bind(fs))
 
 const openZip = promisify(yauzl.open)
 const pipeline = promisify(stream.pipeline)
@@ -53,9 +56,9 @@ class Extractor {
         const destDir = path.dirname(path.join(this.opts.dir, entry.fileName))
 
         try {
-          await fs.mkdir(destDir, { recursive: true })
+          await mkdirAsync(destDir, { recursive: true })
 
-          const canonicalDestDir = await fs.realpath(destDir)
+          const canonicalDestDir = await realpathAsync(destDir)
           const relativeDestDir = path.relative(this.opts.dir, canonicalDestDir)
 
           if (relativeDestDir.split(path.sep).includes('..')) {
@@ -121,7 +124,7 @@ class Extractor {
       mkdirOptions.mode = procMode
     }
     debug('mkdir', { dir: destDir, ...mkdirOptions })
-    await fs.mkdir(destDir, mkdirOptions)
+    await mkdirAsync(destDir, mkdirOptions)
     if (isDir) return
 
     debug('opening read stream', dest)
@@ -130,9 +133,9 @@ class Extractor {
     if (symlink) {
       const link = await getStream(readStream)
       debug('creating symlink', link, dest)
-      await fs.symlink(link, dest)
+      await symlinkAsync(link, dest)
     } else {
-      await pipeline(readStream, createWriteStream(dest, { mode: procMode }))
+      await pipeline(readStream, fs.createWriteStream(dest, { mode: procMode }))
     }
   }
 
@@ -170,7 +173,7 @@ module.exports = async function (zipPath, opts) {
     throw new Error('Target directory is expected to be absolute')
   }
 
-  await fs.mkdir(opts.dir, { recursive: true })
-  opts.dir = await fs.realpath(opts.dir)
+  await mkdirAsync(opts.dir, { recursive: true })
+  opts.dir = await realpathAsync(opts.dir)
   return new Extractor(zipPath, opts).extract()
 }
