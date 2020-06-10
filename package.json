@@ -29,7 +29,7 @@
     "extract"
   ],
   "engines": {
-    "node": ">= 10.12.0"
+    "node": ">= 10.17.0"
   },
   "dependencies": {
     "debug": "^4.1.1",
