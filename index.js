@@ -20,7 +20,7 @@ class Extractor {
   async extract () {
     debug('opening', this.zipPath, 'with opts', this.opts)
 
-    this.zipfile = await (typeof this.zipPath == "string" ? openZip : openBuffer)(this.zipPath, { lazyEntries: true })
+    this.zipfile = await (typeof this.zipPath === 'string' ? openZip : openBuffer)(this.zipPath, { lazyEntries: true })
     this.canceled = false
 
     return new Promise((resolve, reject) => {
