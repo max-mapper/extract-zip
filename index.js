@@ -53,7 +53,7 @@ class Extractor {
         const destDir = path.dirname(path.join(this.opts.dir, entry.fileName))
 
         try {
-          if (!path.parse(process.cwd()).root === destDir) {
+          if (path.parse(process.cwd()).root !== destDir) {
             await fs.mkdir(destDir, { recursive: true })
           }
 
