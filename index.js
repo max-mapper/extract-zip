@@ -169,7 +169,7 @@ module.exports = async function (zipPath, opts) {
     throw new Error('Target directory is expected to be absolute')
   }
 
-  if (!path.parse(process.cwd()).root === opts.dir) {
+  if (path.parse(process.cwd()).root !== opts.dir) {
     await fs.mkdir(opts.dir, { recursive: true })
   }
 
