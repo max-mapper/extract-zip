@@ -10,6 +10,7 @@ let options: extract.Options = {
 };
 options = {
   dir,
+  encoding: 'shift-jis',
   defaultDirMode: 0o700,
   defaultFileMode,
   onEntry: (entry: Entry, zipfile: ZipFile): void => {

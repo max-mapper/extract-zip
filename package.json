@@ -14,6 +14,7 @@
     "lint:js": "eslint .",
     "lint:ts": "eslint --config .eslintrc.typescript.js --ext .ts .",
     "test": "yarn lint && ava",
+    "ci:coverage": "full-icu node_modules/nyc/bin/nyc.js ava",
     "tsd": "tsd"
   },
   "files": [
@@ -29,7 +30,7 @@
     "extract"
   ],
   "engines": {
-    "node": ">= 10.17.0"
+    "node": ">= 10.18.0"
   },
   "dependencies": {
     "debug": "^4.1.1",
@@ -40,6 +41,7 @@
     "@types/yauzl": "^2.9.1"
   },
   "devDependencies": {
+    "@leichtgewicht/full-icu": "^1.3.3",
     "@typescript-eslint/eslint-plugin": "^3.2.0",
     "@typescript-eslint/parser": "^3.2.0",
     "ava": "^3.5.1",

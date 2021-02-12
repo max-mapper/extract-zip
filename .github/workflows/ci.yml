@@ -38,4 +38,4 @@ jobs:
       - name: Lint
         run: yarn lint
       - name: Test
-        run: yarn coverage
+        run: yarn ci:coverage

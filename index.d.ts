@@ -6,6 +6,7 @@ import { Entry, ZipFile } from 'yauzl';
 
 declare namespace extract {
     interface Options {
+        encoding?: string;
         dir: string;
         defaultDirMode?: number;
         defaultFileMode?: number;
