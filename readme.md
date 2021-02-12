@@ -42,16 +42,19 @@ async function main () {
 ### Options
 
 - `dir` (required) - the path to the directory where the extracted files are written
+- `encoding` - string - [encoding][] to be used for file names, defaults to `utf-8`
 - `defaultDirMode` - integer - Directory Mode (permissions), defaults to `0o755`
 - `defaultFileMode` - integer - File Mode (permissions), defaults to `0o644`
 - `onEntry` - function - if present, will be called with `(entry, zipfile)`, entry is every entry from the zip file forwarded from the `entry` event from yauzl. `zipfile` is the `yauzl` instance
 
 Default modes are only used if no permissions are set in the zip file.
 
+[encoding]: https://developer.mozilla.org/en-US/docs/Web/API/TextDecoder/encoding
+
 ## CLI Usage
 
 ```
-extract-zip foo.zip <targetDirectory>
+extract-zip foo.zip <targetDirectory> [--encoding=<encoding>]
 ```
 
 If not specified, `targetDirectory` will default to `process.cwd()`.

@@ -11,6 +11,7 @@ const subdirZip = path.join(__dirname, 'file-in-subdir-without-subdir-entry.zip'
 const symlinkDestZip = path.join(__dirname, 'symlink-dest.zip')
 const symlinkZip = path.join(__dirname, 'symlink.zip')
 const brokenZip = path.join(__dirname, 'broken.zip')
+const mojibakeZip = path.join(__dirname, 'mojibake.zip')
 
 const relativeTarget = './cats'
 
@@ -160,4 +161,12 @@ test('extract broken zip', async t => {
   await t.throwsAsync(extract(brokenZip, { dir: dirPath }), {
     message: 'invalid central directory file header signature: 0x2014b00'
   })
+})
+
+test('extract mojibake', async t => {
+  const dirPath = await mkdtemp(t, 'mojibake-zip')
+  await extract(mojibakeZip, { dir: dirPath, encoding: 'windows-949' })
+  await pathExists(t, path.join(dirPath, '새 텍스트 문서.txt'), 'file created')
+  await pathExists(t, path.join(dirPath, '새 폴더'), 'folder created')
+  await pathExists(t, path.join(dirPath, '새 폴더', '한글문서.txt'), 'subfile created')
 })
