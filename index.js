@@ -44,10 +44,8 @@ class Extractor {
       this.zipfile.readEntry()
 
       this.zipfile.on('end', () => {
-        if (!this.canceled) {
-          debug('zip extraction complete')
-          resolve()
-        }
+        debug('zip extraction complete')
+        resolve()
       })
 
       this.zipfile.on('entry', async entry => {
