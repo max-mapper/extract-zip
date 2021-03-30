@@ -11,14 +11,14 @@ declare namespace extract {
         defaultFileMode?: number;
         onEntry?: (entry: Entry, zipfile: ZipFile) => void;
     }
+
+    type ExtractBuffer = (buffer: Buffer, opts: extract.Options) => Promise<void>;
+    type ExtractFile = (zipPath: string, opts: extract.Options) => Promise<void>;
 }
 
-type ExtractBuffer = (buffer: Buffer, opts: extract.Options) => Promise<void>;
-type ExtractFile = (zipPath: string, opts: extract.Options) => Promise<void>;
-
-declare const extract: ExtractFile & {
-  extractBuffer: ExtractBuffer,
-  extractFile: ExtractFile
+declare const extract: extract.ExtractFile & {
+    extractBuffer: extract.ExtractBuffer,
+    extractFile: extract.ExtractFile
 };
 
 export = extract;
