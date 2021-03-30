@@ -17,8 +17,8 @@ type ExtractBuffer = (buffer: Buffer, opts: extract.Options) => Promise<void>;
 type ExtractFile = (zipPath: string, opts: extract.Options) => Promise<void>;
 
 declare const extract: ExtractFile & {
-  extractFile: ExtractFile,
-  extractBuffer: ExtractBuffer
+  extractBuffer: ExtractBuffer,
+  extractFile: ExtractFile
 };
 
 export = extract;
