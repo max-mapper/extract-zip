@@ -9,7 +9,7 @@
   },
   "scripts": {
     "ava": "ava",
-    "coverage": "nyc ava",
+    "coverage": "nyc --reporter=lcov --reporter=text ava",
     "lint": "yarn lint:js && yarn lint:ts && yarn tsd",
     "lint:js": "eslint .",
     "lint:ts": "eslint --config .eslintrc.typescript.js --ext .ts .",
