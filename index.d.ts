@@ -13,9 +13,12 @@ declare namespace extract {
     }
 }
 
-declare function extract(
-  zipPath: string,
-  opts: extract.Options,
-): Promise<void>;
+type ExtractBuffer = (buffer: Buffer, opts: extract.Options) => Promise<void>;
+type ExtractFile = (zipPath: string, opts: extract.Options) => Promise<void>;
+
+declare const extract: ExtractFile & {
+  extractFile: ExtractFile,
+  extractBuffer: ExtractBuffer
+};
 
 export = extract;
