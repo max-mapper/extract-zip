@@ -19,6 +19,7 @@ declare namespace extract {
          * yauzl instance
          */
         onEntry?: (entry: Entry, zipfile: ZipFile) => void;
+        filter?: (entry: Entry, zipfile: ZipFile) => boolean;
     }
 }
 
