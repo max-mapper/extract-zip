@@ -99,10 +99,8 @@ test('opts.onEntry', async t => {
 
 test('relative target directory', async t => {
   await fs.remove(relativeTarget)
-  await t.throwsAsync(extract(catsZip, { dir: relativeTarget }), {
-    message: 'Target directory is expected to be absolute'
-  })
-  await pathDoesntExist(t, path.join(__dirname, relativeTarget), 'folder not created')
+  await extract(catsZip, { dir: relativeTarget })
+  await pathExists(t, path.join(__dirname, relativeTarget), 'folder created')
   await fs.remove(relativeTarget)
 })
 
