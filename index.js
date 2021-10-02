@@ -23,7 +23,7 @@ class Extractor {
     this.canceled = false
 
     return new Promise((resolve, reject) => {
-      this.zipfile.on('error', err => {
+      this.zipfile.on('error', (err) => {
         this.canceled = true
         reject(err)
       })
@@ -36,7 +36,7 @@ class Extractor {
         }
       })
 
-      this.zipfile.on('entry', async entry => {
+      this.zipfile.on('entry', async (entry) => {
         /* istanbul ignore if */
         if (this.canceled) {
           debug('skipping entry', entry.fileName, { cancelled: this.canceled })
@@ -56,10 +56,15 @@ class Extractor {
           await fs.mkdir(destDir, { recursive: true })
 
           const canonicalDestDir = await fs.realpath(destDir)
-          const relativeDestDir = path.relative(this.opts.dir, canonicalDestDir)
+          const relativeDestDir = path.relative(
+            this.opts.dir,
+            canonicalDestDir
+          )
 
           if (relativeDestDir.split(path.sep).includes('..')) {
-            throw new Error(`Out of bound path "${canonicalDestDir}" found while processing file ${entry.fileName}`)
+            throw new Error(
+              `Out of bound path "${canonicalDestDir}" found while processing file ${entry.fileName}`
+            )
           }
 
           await this.extractEntry(entry)
@@ -77,7 +82,9 @@ class Extractor {
   async extractEntry (entry) {
     /* istanbul ignore if */
     if (this.canceled) {
-      debug('skipping entry extraction', entry.fileName, { cancelled: this.canceled })
+      debug('skipping entry extraction', entry.fileName, {
+        cancelled: this.canceled
+      })
       return
     }
 
@@ -88,7 +95,7 @@ class Extractor {
     const dest = path.join(this.opts.dir, entry.fileName)
 
     // convert external file attr int into a fs stat mode int
-    const mode = (entry.externalFileAttributes >> 16) & 0xFFFF
+    const mode = (entry.externalFileAttributes >> 16) & 0xffff
     // check if it's a symlink or dir (using stat mode constants)
     const IFMT = 61440
     const IFDIR = 16384
@@ -104,9 +111,13 @@ class Extractor {
     // check for windows weird way of specifying a directory
     // https://github.com/maxogden/extract-zip/issues/13#issuecomment-154494566
     const madeBy = entry.versionMadeBy >> 8
-    if (!isDir) isDir = (madeBy === 0 && entry.externalFileAttributes === 16)
+    if (!isDir) isDir = madeBy === 0 && entry.externalFileAttributes === 16
 
-    debug('extracting entry', { filename: entry.fileName, isDir: isDir, isSymlink: symlink })
+    debug('extracting entry', {
+      filename: entry.fileName,
+      isDir: isDir,
+      isSymlink: symlink
+    })
 
     const procMode = this.getExtractedMode(mode, isDir) & 0o777
 
@@ -122,7 +133,9 @@ class Extractor {
     if (isDir) return
 
     debug('opening read stream', dest)
-    const readStream = await promisify(this.zipfile.openReadStream.bind(this.zipfile))(entry)
+    const readStream = await promisify(
+      this.zipfile.openReadStream.bind(this.zipfile)
+    )(entry)
 
     if (symlink) {
       const link = await getStream(readStream)
@@ -164,7 +177,8 @@ module.exports = async function (zipPath, opts) {
   debug('creating target directory', opts.dir)
 
   if (!path.isAbsolute(opts.dir)) {
-    throw new Error('Target directory is expected to be absolute')
+    opts.dir = path.resolve(opts.dir)
+    debug('relative target directory converted to absolute', opts.dir)
   }
 
   await fs.mkdir(opts.dir, { recursive: true })
