@@ -1,5 +1,5 @@
 const debug = require('debug')('extract-zip')
-// eslint-disable-next-line node/no-unsupported-features/node-builtins
+// eslint-disable-next-line n/no-unsupported-features/node-builtins
 const { createWriteStream, promises: fs } = require('fs')
 const getStream = require('get-stream')
 const path = require('path')
@@ -106,7 +106,7 @@ class Extractor {
     const madeBy = entry.versionMadeBy >> 8
     if (!isDir) isDir = (madeBy === 0 && entry.externalFileAttributes === 16)
 
-    debug('extracting entry', { filename: entry.fileName, isDir: isDir, isSymlink: symlink })
+    debug('extracting entry', { filename: entry.fileName, isDir, isSymlink: symlink })
 
     const procMode = this.getExtractedMode(mode, isDir) & 0o777
 

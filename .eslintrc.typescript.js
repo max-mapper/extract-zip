@@ -7,7 +7,7 @@ eslintConfig.extends.push(
 )
 
 eslintConfig.rules = {
-  'node/no-unsupported-features/es-syntax': 'off',
+  'n/no-unsupported-features/es-syntax': 'off',
   'comma-dangle': ['error', 'only-multiline'],
   semi: ['error', 'always'],
   'space-before-function-paren': ['error', 'never']
